@@ -25,7 +25,11 @@ import frc.robot.utilities.OdometryUtility;
 import frc.robot.utilities.SwerveModuleConstants;
 import frc.robot.utilities.vision.estimation.CameraProperties;
 import frc.robot.utilities.vision.estimation.PNPResults;
+import frc.robot.utilities.TestAprilTag;
 import frc.robot.simulation.FieldSim;
+import frc.robot.subsystems.Arm;
+import frc.robot.subsystems.ArmSimulation;
+import frc.robot.subsystems.EvalatorSimuationSample;
 import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.SwerveDrive;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -59,26 +63,26 @@ import frc.robot.commands.TravelToTarget;
  */
 import frc.robot.commands.armcommands.MoveArmCommand;
 public class RobotContainer {
-  /* Drive Controls */
-  private final int translationAxis = XboxController.Axis.kLeftY.value;
-  private final int strafeAxis = XboxController.Axis.kLeftX.value;
-  private final int rotationAxis = XboxController.Axis.kRightX.value;
+    /* Drive Controls */
+    private final int translationAxis = XboxController.Axis.kLeftY.value;
+    private final int strafeAxis = XboxController.Axis.kLeftX.value;
+    private final int rotationAxis = XboxController.Axis.kRightX.value;
 
-  /* Modules */
-  //Cannot use an ID of 0
-  //Changed the turningMotorID and cancoderID from 0 to 3
-  public static final SwerveModuleConstants frontLeftModule = 
-    new SwerveModuleConstants(8, 9, 9, 114.69);
-  public static final SwerveModuleConstants frontRightModule = 
-    new SwerveModuleConstants(11, 10, 10, 235.1);
-  public static final SwerveModuleConstants backLeftModule = 
-    new SwerveModuleConstants(1, 3, 3, 84.28);
-  public static final SwerveModuleConstants backRightModule = 
-    new SwerveModuleConstants(18, 19, 19, 9.75);
-  //https://buildmedia.readthedocs.org/media/pdf/phoenix-documentation/latest/phoenix-documentation.pdf
-  //page 100
+    /* Modules */
+    //Cannot use an ID of 0
+    //Changed the turningMotorID and cancoderID from 0 to 3
+    public static final SwerveModuleConstants frontLeftModule = 
+      new SwerveModuleConstants(8, 9, 9, 114.69);
+    public static final SwerveModuleConstants frontRightModule = 
+      new SwerveModuleConstants(11, 10, 10, 235.1);
+    public static final SwerveModuleConstants backLeftModule = 
+      new SwerveModuleConstants(1, 3, 3, 84.28);
+    public static final SwerveModuleConstants backRightModule = 
+      new SwerveModuleConstants(18, 19, 19, 9.75);
+    //https://buildmedia.readthedocs.org/media/pdf/phoenix-documentation/latest/phoenix-documentation.pdf
+    //page 100
 
-  
+    
   // The driver's controller
   CommandXboxController m_driverController = new CommandXboxController(kDriverControllerPort);
 
@@ -102,14 +106,14 @@ public class RobotContainer {
   private final MoveArmCommand m_IntakeArmPosition = new MoveArmCommand(m_arm, 0.5, ArmSubsystem.intakeWristPosition, ArmSubsystem.intakeArmPosition);
   private final MoveArmCommand m_StowArmPosition = new MoveArmCommand(m_arm, 0.5, ArmSubsystem.stowWristPosition, ArmSubsystem.stowArmPosition);
 
-  public static final int kDriverControllerPort = 0;
-  //TODO REMOVE
-  private static final double kMaxAngularSpeedRadiansPerSecond = Math.PI;
-  private static final double kMaxAngularSpeedRadiansPerSecondSquared = Math.PI;
-  private static final double kMaxAccelerationMetersPerSecondSquared = 3;
-  private static final double kPXController = 1;
-  private static final double kPYController = 1;
-
+    public static final int kDriverControllerPort = 0;
+    //TODO REMOVE
+    private static final double kMaxAngularSpeedRadiansPerSecond = Math.PI;
+    private static final double kMaxAngularSpeedRadiansPerSecondSquared = Math.PI;
+    private static final double kMaxAccelerationMetersPerSecondSquared = 3;
+    private static final double kPXController = 1;
+    private static final double kPYController = 1;
+  
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
     //TODO add port forwarding
@@ -119,12 +123,63 @@ public class RobotContainer {
 
     // Configure the button bindings
     configureButtonBindings();
-    m_driverController.x().whileTrue(m_travelToTarget);
-    m_driverController.y().whileTrue(m_rotateCommand);
-    m_driverController.b().whileTrue(m_autoBalanceCommand);
+    AddMechanisms();
+    new TestAprilTag().logAprilTagsPositions();
+    //m_driverController.x().whileTrue(m_travelToTarget);
+    //m_driverController.y().whileTrue(m_rotateCommand);
+    //m_driverController.b().whileTrue(m_autoBalanceCommand);
     // Configure default commands
-    m_robotDrive.setDefaultCommand(new TeleopSwerve(m_robotDrive, m_driverController, translationAxis, strafeAxis, rotationAxis, true, true));
-    m_fieldSim.initSim();
+    m_robotDrive.setDefaultCommand(
+        // The left stick controls translation of the robot.
+        // Turning is controlled by the X axis of the right stick.
+        new RunCommand(
+            // TODO switch SwerveDrive Command and joyswitch deadband control see REV example
+            () ->
+                m_robotDrive.drive(
+                    m_driverController.getLeftY(),
+                    m_driverController.getLeftX(),
+                    m_driverController.getRightX(),
+                    true, true),
+            m_robotDrive));
+      // TODO this forgot line for simulation
+      m_fieldSim.initSim();
+  }
+
+  private void AddMechanisms() {
+        // Configure default commands
+        Arm m_arm = new Arm();
+        m_arm.setDefaultCommand(
+          new RunCommand(
+              // TODO switch SwerveDrive Command and joyswitch deadband control see REV example
+              () ->
+                  m_arm.controlArm(
+                      m_driverController.getRightY(),
+                      m_driverController.getLeftTriggerAxis()
+                      ),
+              m_arm));
+    
+        // Configure default commands
+        ArmSimulation m_armSim = new ArmSimulation();
+        m_armSim.setDefaultCommand(
+          new RunCommand(
+              // TODO switch SwerveDrive Command and joyswitch deadband control see REV example
+              () ->
+                  m_armSim.controlArm(
+                      m_driverController.a().getAsBoolean() // getAButton()
+                      ),
+              m_armSim));
+    
+        // Configure default commands
+        EvalatorSimuationSample m_evalSim = new EvalatorSimuationSample();
+        m_evalSim.setDefaultCommand(
+          new RunCommand(
+              // TODO switch SwerveDrive Command and joyswitch deadband control see REV example
+              () ->
+              m_evalSim.controlEvalator(
+                      m_driverController.b().getAsBoolean() //getBButton()
+                      ),
+                      m_evalSim));
+    
   }
 
   /**
