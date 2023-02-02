@@ -31,7 +31,7 @@ public class TaxiOneBall extends SequentialCommandGroup {
                 s_Swerve.getAutoXController(),
                 s_Swerve.getAutoYController(),
                 thetaController,
-                s_Swerve::setSwerveModuleStates,
+                s_Swerve::setSwerveModuleStatesDuringAuto,
                 s_Swerve);
 
 

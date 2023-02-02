@@ -29,6 +29,8 @@ import frc.robot.simulation.FieldSim;
 import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.SwerveDrive;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -43,7 +45,12 @@ import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 import org.photonvision.targeting.TargetCorner;
 
+
 import frc.robot.autos.AutoCommandManager;
+import java.util.HashMap;
+import java.util.List;
+
+import frc.robot.autos.FirstCone;
 import frc.robot.autos.TaxiOneBall;
 import frc.robot.commands.AutoBalanceCommand;
 import frc.robot.commands.RotateCommand;
@@ -59,26 +66,26 @@ import frc.robot.commands.TravelToTarget;
  */
 import frc.robot.commands.armcommands.MoveArmCommand;
 public class RobotContainer {
-  /* Drive Controls */
-  private final int translationAxis = XboxController.Axis.kLeftY.value;
-  private final int strafeAxis = XboxController.Axis.kLeftX.value;
-  private final int rotationAxis = XboxController.Axis.kRightX.value;
+    /* Drive Controls */
+    private final int translationAxis = XboxController.Axis.kLeftY.value;
+    private final int strafeAxis = XboxController.Axis.kLeftX.value;
+    private final int rotationAxis = XboxController.Axis.kRightX.value;
 
-  /* Modules */
-  //Cannot use an ID of 0
-  //Changed the turningMotorID and cancoderID from 0 to 3
-  public static final SwerveModuleConstants frontLeftModule = 
-    new SwerveModuleConstants(8, 9, 9, 114.69);
-  public static final SwerveModuleConstants frontRightModule = 
-    new SwerveModuleConstants(11, 10, 10, 235.1);
-  public static final SwerveModuleConstants backLeftModule = 
-    new SwerveModuleConstants(1, 3, 3, 84.28);
-  public static final SwerveModuleConstants backRightModule = 
-    new SwerveModuleConstants(18, 19, 19, 9.75);
-  //https://buildmedia.readthedocs.org/media/pdf/phoenix-documentation/latest/phoenix-documentation.pdf
-  //page 100
+    /* Modules */
+    //Cannot use an ID of 0
+    //Changed the turningMotorID and cancoderID from 0 to 3
+    public static final SwerveModuleConstants frontLeftModule = 
+      new SwerveModuleConstants(8, 9, 9, 114.69);
+    public static final SwerveModuleConstants frontRightModule = 
+      new SwerveModuleConstants(11, 10, 10, 235.1);
+    public static final SwerveModuleConstants backLeftModule = 
+      new SwerveModuleConstants(1, 3, 3, 84.28);
+    public static final SwerveModuleConstants backRightModule = 
+      new SwerveModuleConstants(18, 19, 19, 9.75);
+    //https://buildmedia.readthedocs.org/media/pdf/phoenix-documentation/latest/phoenix-documentation.pdf
+    //page 100
 
-  
+    
   // The driver's controller
   CommandXboxController m_driverController = new CommandXboxController(kDriverControllerPort);
 
@@ -102,13 +109,16 @@ public class RobotContainer {
   private final MoveArmCommand m_IntakeArmPosition = new MoveArmCommand(m_arm, 0.5, ArmSubsystem.intakeWristPosition, ArmSubsystem.intakeArmPosition);
   private final MoveArmCommand m_StowArmPosition = new MoveArmCommand(m_arm, 0.5, ArmSubsystem.stowWristPosition, ArmSubsystem.stowArmPosition);
 
-  public static final int kDriverControllerPort = 0;
-  //TODO REMOVE
-  private static final double kMaxAngularSpeedRadiansPerSecond = Math.PI;
-  private static final double kMaxAngularSpeedRadiansPerSecondSquared = Math.PI;
-  private static final double kMaxAccelerationMetersPerSecondSquared = 3;
-  private static final double kPXController = 1;
-  private static final double kPYController = 1;
+    public static final int kDriverControllerPort = 0;
+    //TODO REMOVE
+    private static final double kMaxAngularSpeedRadiansPerSecond = Math.PI;
+    private static final double kMaxAngularSpeedRadiansPerSecondSquared = Math.PI;
+    private static final double kMaxAccelerationMetersPerSecondSquared = 3;
+    private static final double kPXController = 1;
+    private static final double kPYController = 1;
+  
+  public  HashMap<String, Command> eventCommandMap = new HashMap<>();
+    
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
@@ -124,7 +134,17 @@ public class RobotContainer {
     m_driverController.b().whileTrue(m_autoBalanceCommand);
     // Configure default commands
     m_robotDrive.setDefaultCommand(new TeleopSwerve(m_robotDrive, m_driverController, translationAxis, strafeAxis, rotationAxis, true, true));
-    m_fieldSim.initSim();
+
+    eventCommandMap.put("marker1", new PrintCommand("Passed marker 1"));
+    eventCommandMap.put("intakeDown", new InstantCommand( () -> {
+        System.out.println("TESTING.......");}));
+    eventCommandMap.put("placeCone", new InstantCommand( () -> {
+        System.out.println("Placing Cone......");}));
+    eventCommandMap.put("balance", new InstantCommand( () -> {
+        System.out.println("Balance on charging station.....");}));
+  
+      // TODO this forgot line for simulation
+      m_fieldSim.initSim();
   }
 
   /**
@@ -141,12 +161,13 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-
-    return m_autoManager.getAutonomousCommand();
+    // return m_autoManager.getAutonomousCommand();
     //TODO determine if autoManager needs to have andThen(() -> m_robotDrive.drive(0, 0, 0, false,false));
 
     //return new TaxiOneBall(m_robotDrive).andThen(() -> m_robotDrive.drive(0, 0, 0, false,false));
 
+    Command command = new FirstCone(m_robotDrive,eventCommandMap).andThen(() -> m_robotDrive.drive(0, 0, 0, false,true));
+    return command;
   }
 
   public void periodic() {

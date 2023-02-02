@@ -34,7 +34,7 @@ public class TravelToTarget extends SequentialCommandGroup {
             m_swerveDrive.getAutoXController(),
             m_swerveDrive.getAutoYController(),
             thetaController,
-            m_swerveDrive::setSwerveModuleStates,
+            m_swerveDrive::setSwerveModuleStatesDuringAuto,
             false,  // MUST BE false of NPE due to reversing path and I don't think want to reverse anyhow
             m_swerveDrive);
         addCommands(swerveControllerCommand);

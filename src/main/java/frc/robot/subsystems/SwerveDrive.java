@@ -12,6 +12,7 @@ import com.ctre.phoenix.unmanaged.Unmanaged;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -96,7 +97,7 @@ public class SwerveDrive extends SubsystemBase {
         autoThetaController = new PIDController(
         1.33, 0, 0);
         autoPitchController = new PIDController(1, 0, 0);
-        
+
     // m_aprilCameraOne = new AprilVisionUtility(kDriveKinematics, getHeadingRotation2d(), getModulePositions(), getPoseMeters());
     m_aprilCameraOne = new OdometryUtility(kDriveKinematics, getHeadingRotation2d(), getModulePositions(), getPoseMeters());
   }
@@ -241,14 +242,14 @@ public class SwerveDrive extends SubsystemBase {
     public PIDController getAutoThetaController() {
         return autoThetaController;
     }
-    
+
     public PIDController getAutoPitchController() {
       return autoPitchController;
     }
     public void resetOdometry(Pose2d initialPose) {
         m_odometry.resetPosition(getYaw(), getModulePositions(), initialPose);
     }
-     
+    
 
 
     private Rotation2d getYaw() {
@@ -263,7 +264,7 @@ public class SwerveDrive extends SubsystemBase {
       return (invertGyro) ? Rotation2d.fromDegrees(360 - ypr[1]) : Rotation2d.fromDegrees(ypr[1]);
     }
 
-    public void setSwerveModuleStates(SwerveModuleState[] states) {
+    public void setSwerveModuleStatesDuringAuto(SwerveModuleState[] states) {
         setSwerveModuleStates(states, false);
     }
   /**
