@@ -122,8 +122,17 @@ public class RobotContainer {
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
+    eventCommandMap.put("marker1", new PrintCommand("Passed marker 1"));
+    eventCommandMap.put("intakeDown", new InstantCommand( () -> {
+        System.out.println("TESTING.......");}));
+    eventCommandMap.put("placeCone", new InstantCommand( () -> {
+        System.out.println("Placing Cone......");}));
+    eventCommandMap.put("balance", new InstantCommand( () -> {
+        System.out.println("Balance on charging station.....");}));
+  
+
     //TODO add port forwarding
-    m_autoManager = new AutoCommandManager();
+    m_autoManager = new AutoCommandManager(eventCommandMap);
     m_autoManager.addSubsystem(subNames.SwerveDriveSubsystem, m_robotDrive);
     m_autoManager.initCommands();
 
@@ -135,14 +144,6 @@ public class RobotContainer {
     // Configure default commands
     m_robotDrive.setDefaultCommand(new TeleopSwerve(m_robotDrive, m_driverController, translationAxis, strafeAxis, rotationAxis, true, true));
 
-    eventCommandMap.put("marker1", new PrintCommand("Passed marker 1"));
-    eventCommandMap.put("intakeDown", new InstantCommand( () -> {
-        System.out.println("TESTING.......");}));
-    eventCommandMap.put("placeCone", new InstantCommand( () -> {
-        System.out.println("Placing Cone......");}));
-    eventCommandMap.put("balance", new InstantCommand( () -> {
-        System.out.println("Balance on charging station.....");}));
-  
       // TODO this forgot line for simulation
       m_fieldSim.initSim();
   }
@@ -161,13 +162,10 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    // return m_autoManager.getAutonomousCommand();
+    return m_autoManager.getAutonomousCommand();
     //TODO determine if autoManager needs to have andThen(() -> m_robotDrive.drive(0, 0, 0, false,false));
 
     //return new TaxiOneBall(m_robotDrive).andThen(() -> m_robotDrive.drive(0, 0, 0, false,false));
-
-    Command command = new FirstCone(m_robotDrive,eventCommandMap).andThen(() -> m_robotDrive.drive(0, 0, 0, false,true));
-    return command;
   }
 
   public void periodic() {

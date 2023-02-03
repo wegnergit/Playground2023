@@ -2,12 +2,17 @@
   "NTProvider": {
     "types": {
       "/FMSInfo": "FMSInfo",
+      "/SmartDashboard/Auto choices": "String Chooser",
       "/SmartDashboard/Field2d": "Field2d",
       "/SmartDashboard/PPSwerveControllerCommand_field": "Field2d"
     },
     "windows": {
+      "/SmartDashboard/Auto choices": {
+        "window": {
+          "visible": true
+        }
+      },
       "/SmartDashboard/Field2d": {
-        "image": "C:\\Users\\JackL\\Downloads\\2023-field.png",
         "window": {
           "visible": true
         }

@@ -16,6 +16,7 @@ import frc.robot.subsystems.*;
  */
 public class AutoCommandManager {
     HashMap<String, Subsystem> subsystemMap = new HashMap<String, Subsystem>();
+    private HashMap<String, Command> m_eventCommandMap;
 
     public static enum subNames {
         SwerveDriveSubsystem("SwerveDrive");
@@ -27,6 +28,9 @@ public class AutoCommandManager {
         }
     }
 
+    public AutoCommandManager(HashMap<String, Command> eventCommandMap) {
+        m_eventCommandMap = eventCommandMap;
+    }
     /**
      * Adds a subbsystem to the subystem map
      *
@@ -43,11 +47,27 @@ public class AutoCommandManager {
      * Creates instances of each autonomous path command
      */
     public void initCommands() {
-        TaxiOneBall taxiOneBall = new TaxiOneBall(
-            (SwerveDrive) subsystemMap.get(subNames.SwerveDriveSubsystem.toString()));
+        // Subsystems needed
+        SwerveDrive swerveDrive = (SwerveDrive) subsystemMap.get(subNames.SwerveDriveSubsystem.toString());
 
+        // Commands
+        TaxiOneBall taxiOneBall = new TaxiOneBall(swerveDrive, false);
+        Command firstCone = new FirstCone(swerveDrive, m_eventCommandMap, false);
+        Command firstConeCommand = new PathPlannerCommand("FirstCone", swerveDrive, m_eventCommandMap, false);
+        TaxiOneBall taxiOneBallWithPoseEst = new TaxiOneBall(swerveDrive, true);
+        Command firstConeWithPoseEst = new FirstCone(swerveDrive, m_eventCommandMap, true);
+        Command firstConeCommandWithPoseEst = new PathPlannerCommand("FirstCone", swerveDrive, m_eventCommandMap, true);
+
+        // Add options to chooser widget
         m_chooser.setDefaultOption("None", null);
         m_chooser.addOption("Taxi One Ball", taxiOneBall);
+        m_chooser.addOption("FirstCone", firstCone);
+        m_chooser.addOption("FirstConeCommand", firstConeCommand);
+        m_chooser.addOption("Taxi One Ball W Pose Est", taxiOneBallWithPoseEst);
+        m_chooser.addOption("FirstCone W Pose Est", firstConeWithPoseEst);
+        m_chooser.addOption("FirstConeCommand W Pose Est", firstConeCommandWithPoseEst);
+
+        // Place Chooser on dashboard
         SmartDashboard.putData("Auto choices", m_chooser);
     }
     /**

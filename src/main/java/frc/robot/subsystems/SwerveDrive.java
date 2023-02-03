@@ -248,6 +248,8 @@ public class SwerveDrive extends SubsystemBase {
     }
     public void resetOdometry(Pose2d initialPose) {
         m_odometry.resetPosition(getYaw(), getModulePositions(), initialPose);
+        // THIS FIXED AUTO when using getPose() (swerve estimator) 
+        m_aprilCameraOne.resetPosition(getYaw(), getModulePositions(), initialPose);
     }
     
 

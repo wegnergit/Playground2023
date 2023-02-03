@@ -21,7 +21,9 @@ import frc.robot.utilities.SwerveAutoBuilder;
 public class FirstCone  extends SequentialCommandGroup {
 
     
-    public FirstCone(SwerveDrive driveSubsystem, HashMap<String, Command> eventMap) {
+    public FirstCone(SwerveDrive driveSubsystem, HashMap<String, Command> eventMap, boolean usePoseEst) {
+        addRequirements(driveSubsystem);
+
         // This will load the file "FullAuto.path" and generate it with a max velocity of 4 m/s and a max acceleration of 3 m/s^2
         // for every path in the group
         List<PathPlannerTrajectory> pathGroup = PathPlanner.loadPathGroup("FirstCone", new PathConstraints(4, 3));
@@ -38,7 +40,7 @@ public class FirstCone  extends SequentialCommandGroup {
         // Create the AutoBuilder. This only needs to be created once when robot code starts, not every time you want to create an auto command. A good place to put this is in RobotContainer along with your subsystems.
         SwerveAutoBuilder autoBuilder = new SwerveAutoBuilder(
             // TODO TRY Estimator but field2d not displaying
-            driveSubsystem::getPoseMeters, //Est, // Pose2d supplier
+            (usePoseEst)?driveSubsystem::getPose:driveSubsystem::getPoseMeters, //Est, // Pose2d supplier
             driveSubsystem::resetOdometry, //Est, // Pose2d consumer, used to reset odometry at the beginning of auto
             SwerveDrive.getSwerveKinematics(), // SwerveDriveKinematics
             new PIDConstants(5.0, 0.0, 0.0), // PID constants to correct for translation error (used to create the X and Y PID controllers)

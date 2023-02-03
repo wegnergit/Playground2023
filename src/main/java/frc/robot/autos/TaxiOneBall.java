@@ -13,7 +13,8 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 
 public class TaxiOneBall extends SequentialCommandGroup {
-    public TaxiOneBall(SwerveDrive s_Swerve) {
+    public TaxiOneBall(SwerveDrive s_Swerve, boolean usePoseEst) {
+        addRequirements(s_Swerve); 
 
         // An example trajectory to follow.  All units in meters.
         PathPlannerTrajectory pathPlannerExample = PathPlanner.loadPath("TaxiOneBall", 
@@ -26,7 +27,7 @@ public class TaxiOneBall extends SequentialCommandGroup {
         PPSwerveControllerCommand swerveControllerCommand = 
             new PPSwerveControllerCommand(
                 pathPlannerExample,
-                s_Swerve::getPoseMeters,
+                (usePoseEst)?s_Swerve::getPose:s_Swerve::getPoseMeters,
                 SwerveDrive.getSwerveKinematics(),
                 s_Swerve.getAutoXController(),
                 s_Swerve.getAutoYController(),

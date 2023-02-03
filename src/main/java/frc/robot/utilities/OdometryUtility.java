@@ -267,4 +267,10 @@ public class OdometryUtility {
             Timer.getFPGATimestamp() - latencySeconds
         );
     }
+
+
+    public void resetPosition(Rotation2d yaw, SwerveModulePosition[] modulePositions, Pose2d initialPose) {
+        // THIS FIXED AUTO with getPose (swerve estimator)
+        m_PoseEstimator.resetPosition(yaw, modulePositions, initialPose);
+    }
 }
