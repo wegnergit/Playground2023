@@ -4,47 +4,19 @@
 
 package frc.robot;
 
-import edu.wpi.first.apriltag.AprilTag;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.math.trajectory.TrajectoryConfig;
-import edu.wpi.first.math.trajectory.TrajectoryGenerator;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.robot.utilities.OdometryUtility;
+import frc.robot.utilities.RobotInformation;
 import frc.robot.utilities.SwerveModuleConstants;
-import frc.robot.utilities.vision.estimation.CameraProperties;
-import frc.robot.utilities.vision.estimation.PNPResults;
 import frc.robot.simulation.FieldSim;
 import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.SwerveDrive;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.littletonrobotics.junction.LogFileUtil;
-import org.photonvision.PhotonCamera;
-import org.photonvision.targeting.PhotonPipelineResult;
-import org.photonvision.targeting.PhotonTrackedTarget;
-import org.photonvision.targeting.TargetCorner;
-
 import frc.robot.autos.AutoCommandManager;
-import frc.robot.autos.TaxiOneBall;
 import frc.robot.commands.AutoBalanceCommand;
 import frc.robot.commands.RotateCommand;
 import frc.robot.autos.AutoCommandManager.subNames;
@@ -59,22 +31,38 @@ import frc.robot.commands.TravelToTarget;
  */
 import frc.robot.commands.armcommands.MoveArmCommand;
 public class RobotContainer {
+
   /* Drive Controls */
   private final int translationAxis = XboxController.Axis.kLeftY.value;
   private final int strafeAxis = XboxController.Axis.kLeftX.value;
   private final int rotationAxis = XboxController.Axis.kRightX.value;
 
+  private final boolean isCompetitionRobot = RobotInformation.queryIfCompetitionRobot(false);
+  
+  // Which Robot code should we use? competition or not
+  RobotInformation robotInfo = 
+    (RobotInformation.queryIfCompetitionRobot(false) ?
+      // Competition robot attributes
+      new RobotInformation(true,
+        new SwerveModuleConstants(8, 9, 9, 114.69),
+        new SwerveModuleConstants(11, 10, 10, 235.1),
+        new SwerveModuleConstants(1, 3, 3, 84.28),
+        new SwerveModuleConstants(18, 19, 19, 9.75))
+      :
+      // Non-Competition robot attributes
+      new RobotInformation(false,
+        new SwerveModuleConstants(8, 9, 9, 114.69),
+        new SwerveModuleConstants(11, 10, 10, 235.1),
+        new SwerveModuleConstants(1, 3, 3, 84.28),
+        new SwerveModuleConstants(18, 19, 19, 9.75)));
+
   /* Modules */
   //Cannot use an ID of 0
   //Changed the turningMotorID and cancoderID from 0 to 3
-  public static final SwerveModuleConstants frontLeftModule = 
-    new SwerveModuleConstants(8, 9, 9, 114.69);
-  public static final SwerveModuleConstants frontRightModule = 
-    new SwerveModuleConstants(11, 10, 10, 235.1);
-  public static final SwerveModuleConstants backLeftModule = 
-    new SwerveModuleConstants(1, 3, 3, 84.28);
-  public static final SwerveModuleConstants backRightModule = 
-    new SwerveModuleConstants(18, 19, 19, 9.75);
+  public final SwerveModuleConstants frontLeftModule = robotInfo.getFrontLeft();
+  public final SwerveModuleConstants frontRightModule =  robotInfo.getFrontRight();
+  public final SwerveModuleConstants backLeftModule = robotInfo.getBackLeft();
+  public final SwerveModuleConstants backRightModule = robotInfo.getBackRight();
   //https://buildmedia.readthedocs.org/media/pdf/phoenix-documentation/latest/phoenix-documentation.pdf
   //page 100
 
@@ -126,6 +114,8 @@ public class RobotContainer {
     m_robotDrive.setDefaultCommand(new TeleopSwerve(m_robotDrive, m_driverController, translationAxis, strafeAxis, rotationAxis, true, true));
     m_fieldSim.initSim();
   }
+
+  
 
   /**
    * Use this method to define your button->command mappings. Buttons can be created by
