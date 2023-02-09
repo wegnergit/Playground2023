@@ -5,7 +5,7 @@ import edu.wpi.first.wpilibj.I2C.Port;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.I2CPortLEDSubSystem;
 
-public class LEDOnArduino extends CommandBase {
+public class LEDOnArduinoUsingI2C extends CommandBase {
   
     public static enum ledActions {
         CONE,
@@ -18,7 +18,7 @@ public class LEDOnArduino extends CommandBase {
     // Open a new I2C connection on port 4  (TODO create subsystem for this)
     
 
-    public LEDOnArduino(I2CPortLEDSubSystem i2cPortLEDSubSystem,  ledActions action) {
+    public LEDOnArduinoUsingI2C(I2CPortLEDSubSystem i2cPortLEDSubSystem,  ledActions action) {
         m_action = action; 
         m_i2cSubSystem = i2cPortLEDSubSystem;
         addRequirements(m_i2cSubSystem);
