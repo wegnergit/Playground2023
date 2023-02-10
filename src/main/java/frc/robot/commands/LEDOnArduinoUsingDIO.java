@@ -29,7 +29,7 @@ public class LEDOnArduinoUsingDIO extends CommandBase {
     }
 
     @Override
-    public void execute() {
+    public void initialize() {
         switch(m_action) {
             case CONE:
                 m_dioPostSubSystem.setPins(true,false,false,false,false);
