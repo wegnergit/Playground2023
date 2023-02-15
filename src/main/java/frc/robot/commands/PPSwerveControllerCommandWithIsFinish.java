@@ -64,6 +64,8 @@ public class PPSwerveControllerCommandWithIsFinish extends PPSwerveControllerCom
 
     @Override
     public void initialize() {
+        // TODO May need to get current velocity of robot and set initial speed so operator can just hit button to go to position.
+        // See greg post in mentor_programming thread about isFInish
         Pose2d currentPose = super.poseSupplier.get();
         double x1 = currentPose.getX();
         double y1 = currentPose.getY();
