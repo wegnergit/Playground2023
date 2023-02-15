@@ -12,8 +12,8 @@ import frc.robot.Robot;
 
 public class RobotInformation {
 
-    // TODO SET MAC Address for competition robot
-    public static final String COMPETIION_ROBOT_MAC_ADDRESS = "XX-XX-XX-XX-XX-XX";
+    // SET MAC Address for competition robot
+    public static final String COMPETIION_ROBOT_MAC_ADDRESS = "00-80-2F-18-15-63";
     private static String macAddress = RobotInformation.getMACAdress();
     private SwerveModuleConstants m_FrontLeft;
     private SwerveModuleConstants m_FrontRIght;
@@ -57,26 +57,47 @@ public class RobotInformation {
     public static boolean queryIfCompetitionRobot(boolean default_to_competition_robot_in_simulation) {
       return Robot.isReal()?macAddress.equals(COMPETIION_ROBOT_MAC_ADDRESS):default_to_competition_robot_in_simulation;
     }
-
+    // TODO Find a better solution to getting the MAC adress 
+    //Doesn't appear to get the MAC adress when the RoboRio starts up
     public static String getMACAdress() {
-        String macAddress="unkwown";
+      String address = getInternalMACAdress();
+      int counter = 0;
+      while(address.equals("unknown") && counter<100) {
+        try {
+          Thread.sleep(10);
+          System.out.println("Counter = " + counter);
+          counter++;
+          address = getInternalMACAdress();
+        } catch (InterruptedException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        }
+      }      
+      return address;
+    }
+    public static String getInternalMACAdress() {
+        String macAddress="unknown";
         InetAddress localHost;
         NetworkInterface ni;
         try {
           localHost = InetAddress.getLocalHost();
           ni = NetworkInterface.getByInetAddress(localHost);
           byte[] hardwareAddress = ni.getHardwareAddress();
-          String[] hexadecimal = new String[hardwareAddress.length];
-          for (int i = 0; i < hardwareAddress.length; i++) {
-              hexadecimal[i] = String.format("%02X", hardwareAddress[i]);
+          if(hardwareAddress != null){
+            String[] hexadecimal = new String[hardwareAddress.length];
+            for (int i = 0; i < hardwareAddress.length; i++) {
+                hexadecimal[i] = String.format("%02X", hardwareAddress[i]);
+            }
+            macAddress = String.join("-", hexadecimal);
+          }else{
+            DriverStation.reportWarning("Unable to get MAC address (hardwareAdress is null)", Thread.currentThread().getStackTrace());
           }
-          macAddress = String.join("-", hexadecimal);
+
         } catch (SocketException e) {
           DriverStation.reportWarning("Unable to get MAC address", e.getStackTrace());
         }catch (UnknownHostException e) {
           DriverStation.reportWarning("Unable to get MAC address (unknown host)", e.getStackTrace());
         }
-        //System.out.println("MAC Address:"+macAddress);
         Logger.getInstance().recordOutput("Robot/MACAddress", macAddress);
         return macAddress;
       }

@@ -3,6 +3,7 @@ package frc.robot.utilities;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 // ----- IMPORTS ----- \\
 
@@ -20,7 +21,6 @@ import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -28,6 +28,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.utilities.vision.estimation.CameraProperties;
@@ -44,35 +45,96 @@ import frc.robot.utilities.vision.estimation.TargetModel;
 public class OdometryUtility {
 
     // ----- CONSTANTS ----- \\
-    // The pipeline that you want to select
-    private static final int PI_CAMERA_INDEX = 0;
+    // Used for simulation Must have photovision camera running network server (enable it)
+    // IMPORTANT can not have turned on when on robot
+    public static final boolean CONNECTED_PHOTOVISION_CAMERA = false;
+    public static final String PHOTOVISION_NETWORK_SERVER = "10.9.30.35";
 
-    // TODO robot to camera
-    private static final double CAMERA_POSITION_X = 10.0;
-    private static final double CAMERA_POSITION_Y = 10.0;
-    private static final double CAMERA_POSITION_Z = 25.0;
+    //TODO Configure postitions of cameras
+    /*
+     * IMPORTANT CAMERA INFO
+     * 
+     * Most values need to be tested/checked and are different for each camera
+     * The resolution, position, and rotation values will need the most tuning
+     * Position and rotation are accounting for the difference between the camera and the center of the robot
+     * 
+     */
+    // Back camera constants
+    private static final String BACK_CAMERA_NAME = "Camera5"; 
+    private static final String BACK_CAMERA_IP_NAME = "10.9.30.35";
+    private static final int BACK_CAMERA_PIPELINE = 0;
+    private static final int BACK_CAMERA_PORT_TO_FORWARD = 5805;
+    private static final String BACK_CAMERA_CONFIG_FILE = "CameraConfigs/Camera5/config.json";
+    private static final int BACK_CAMERA_RESOLUTION_WIDTH = 640;
+    private static final int BACK_CAMERA_RESOLUTION_HEIGHT = 480;
+    private static final double BACK_CAMERA_POSITION_X = Units.inchesToMeters(13.0);
+    private static final double BACK_CAMERA_POSITION_Y = Units.inchesToMeters(19.0);
+    private static final double BACK_CAMERA_POSITION_Z = Units.inchesToMeters(12.0);
+    private static final double BACK_CAMERA_ROTATION_ROLL = Math.toRadians(0.0);
+    private static final double BACK_CAMERA_ROTATION_PITCH = Math.toRadians(0.0);
+    private static final double BACK_CAMERA_ROTATION_YAW = Math.toRadians(0.0);
+
+    //Left camera constants
+    private static final String LEFT_CAMERA_NAME = "Camera2"; 
+    private static final String LEFT_CAMERA_IP_NAME = "10.9.30.32";
+    private static final int LEFT_CAMERA_PIPELINE = 0;
+    private static final int LEFT_CAMERA_PORT_TO_FORWARD = 5802;
+    private static final String LEFT_CAMERA_CONFIG_FILE = "CameraConfigs/Camera2/config.json";
+    private static final int LEFT_CAMERA_RESOLUTION_WIDTH = 640;
+    private static final int LEFT_CAMERA_RESOLUTION_HEIGHT = 480;
+    private static final double LEFT_CAMERA_POSITION_X = Units.inchesToMeters(10.0);
+    private static final double LEFT_CAMERA_POSITION_Y = Units.inchesToMeters(10.0);
+    private static final double LEFT_CAMERA_POSITION_Z = Units.inchesToMeters(25.0);
+    private static final double LEFT_CAMERA_ROTATION_ROLL = Math.toRadians(0.0);;
+    private static final double LEFT_CAMERA_ROTATION_PITCH = Math.toRadians(0.0);;
+    private static final double LEFT_CAMERA_ROTATION_YAW = Math.toRadians(0.0);;
+
+    // Right camera constants
+    private static final String RIGHT_CAMERA_NAME = "Camera3"; 
+    private static final String RIGHT_CAMERA_IP_NAME = "10.9.30.33";
+    private static final int RIGHT_CAMERA_PIPELINE = 0;
+    private static final int RIGHT_CAMERA_PORT_TO_FORWARD = 5803;
+    private static final String RIGHT_CAMERA_CONFIG_FILE = "CameraConfigs/Camera3/config.json";
+    private static final int RIGHT_CAMERA_RESOLUTION_WIDTH = 640;
+    private static final int RIGHT_CAMERA_RESOLUTION_HEIGHT = 480;
+    private static final double RIGHT_CAMERA_POSITION_X = Units.inchesToMeters(10.0);
+    private static final double RIGHT_CAMERA_POSITION_Y = Units.inchesToMeters(10.0);
+    private static final double RIGHT_CAMERA_POSITION_Z = Units.inchesToMeters(25.0);
+    private static final double RIGHT_CAMERA_ROTATION_ROLL = Math.toRadians(0.0);;
+    private static final double RIGHT_CAMERA_ROTATION_PITCH = Math.toRadians(0.0);;
+    private static final double RIGHT_CAMERA_ROTATION_YAW = Math.toRadians(0.0);
 
     // ----- VARIABLES ----- \\
-    // This is the camera that is used for april tags
-    private PhotonCamera m_PhotonCamera;
+    // Three cameras on the robot, 2 in the front, 1 on the back
+    private final CameraOnRobot m_backCamera;
+    // private final CameraOnRobot m_rightCamera;
+    // private final CameraOnRobot m_leftCamera;
 
     private SwerveDriveKinematics m_swerveDriveKinematics;
     private Rotation2d m_rotation;
     private SwerveModulePosition[] m_swerveModulePositions;
     private Pose2d m_position;
     private SwerveDrivePoseEstimator m_PoseEstimator;
-    private final Matrix<N3, N1> m_StateStdDevs = VecBuilder.fill(0.0, 0.0, Units.degreesToRadians(0));
-    private final Matrix<N3, N1> m_VisionMeasurementStdDevs = VecBuilder.fill(0.0, 0.0, Units.degreesToRadians(0));
+    // Confidence level, 0 means that we have 100% confidence in the odometry position and it won't use camera values
+    //TODO Bumped up to 0.5 for testing, please put back down
+    private Matrix<N3, N1> m_StateStdDevs = VecBuilder.fill(0.5, 0.5, Units.degreesToRadians(0.5));
+    private Matrix<N3, N1> m_VisionMeasurementStdDevs = VecBuilder.fill(1.0, 1.0, Units.degreesToRadians(45));
 
     private AprilTagFieldLayout tagLayout;
 
-    private List<PhotonCamera> cameras;
+    private List<CameraOnRobot> cameras;
 
     // ----- CONSTRUCTOR ----- \\
     /**
      * <h3>OdometryUtility</h3>
      * 
      * This contstructs an april tag version of the photonvision
+     * 
+     * Parameters used for the pose estimator
+     * @param swerveDriveKinematics class used to convert the velocity of the robot chassis to module states like speed and angle
+     * @param rotation used to represent a rotation of the robot for the pose estimator
+     * @param swerveModulePositions used to represent the states of the swerve modules
+     * @param position used to represent a Pose2D of the robot for the pose estimator
      */
     public OdometryUtility(SwerveDriveKinematics swerveDriveKinematics, Rotation2d rotation, SwerveModulePosition[] swerveModulePositions, Pose2d position) {
 
@@ -83,8 +145,8 @@ public class OdometryUtility {
         try {
             tagLayout = AprilTagFieldLayout.loadFromResource(AprilTagFields.k2023ChargedUp.m_resourceFile);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            DriverStation.reportWarning("Unable to load ChargedUp AprilTag resource file" + 
+                                        AprilTagFields.k2023ChargedUp.m_resourceFile, e.getStackTrace());
         }
         m_PoseEstimator = new SwerveDrivePoseEstimator(
             m_swerveDriveKinematics,
@@ -95,29 +157,88 @@ public class OdometryUtility {
             m_VisionMeasurementStdDevs
         );
 
-        // Creates the camera
-        m_PhotonCamera = new PhotonCamera("PiCamera");
-        //TODO
-        // camera1 = new PhotonCamera(instance, "front-left");
-        // camera2 = new PhotonCamera(instance, "front-right");
-        // camera3 = new PhotonCamera(instance, "back");
-        cameras = List.of(m_PhotonCamera);
-        m_PhotonCamera.setPipelineIndex(PI_CAMERA_INDEX);
+        // Creates the cameras
+        m_backCamera = new CameraOnRobot(BACK_CAMERA_NAME, 
+                                        BACK_CAMERA_IP_NAME, 
+                                        BACK_CAMERA_PIPELINE, 
+                                        BACK_CAMERA_PORT_TO_FORWARD,
+                                        BACK_CAMERA_CONFIG_FILE,
+                                        BACK_CAMERA_RESOLUTION_WIDTH,
+                                        BACK_CAMERA_RESOLUTION_HEIGHT,
+                                        BACK_CAMERA_POSITION_X,
+                                        BACK_CAMERA_POSITION_Y,
+                                        BACK_CAMERA_POSITION_Z,
+                                        BACK_CAMERA_ROTATION_ROLL,
+                                        BACK_CAMERA_ROTATION_PITCH,
+                                        BACK_CAMERA_ROTATION_YAW
+                                        );
+        // m_leftCamera = new CameraOnRobot(LEFT_CAMERA_NAME, 
+        //                                 LEFT_CAMERA_IP_NAME, 
+        //                                 LEFT_CAMERA_PIPELINE, 
+        //                                 LEFT_CAMERA_PORT_TO_FORWARD,
+        //                                 LEFT_CAMERA_CONFIG_FILE,
+        //                                 LEFT_CAMERA_RESOLUTION_WIDTH,
+        //                                 LEFT_CAMERA_RESOLUTION_HEIGHT,
+        //                                 LEFT_CAMERA_POSITION_X,
+        //                                 LEFT_CAMERA_POSITION_Y,
+        //                                 LEFT_CAMERA_POSITION_Z,
+        //                                 LEFT_CAMERA_ROTATION_ROLL,
+        //                                 LEFT_CAMERA_ROTATION_PITCH,
+        //                                 LEFT_CAMERA_ROTATION_YAW
+        //                                 );
+        // m_rightCamera = new CameraOnRobot(RIGHT_CAMERA_NAME, 
+        //                                 RIGHT_CAMERA_IP_NAME, 
+        //                                 RIGHT_CAMERA_PIPELINE, 
+        //                                 RIGHT_CAMERA_PORT_TO_FORWARD,
+        //                                 RIGHT_CAMERA_CONFIG_FILE,
+        //                                 RIGHT_CAMERA_RESOLUTION_WIDTH,
+        //                                 RIGHT_CAMERA_RESOLUTION_HEIGHT,
+        //                                 RIGHT_CAMERA_POSITION_X,
+        //                                 RIGHT_CAMERA_POSITION_Y,
+        //                                 RIGHT_CAMERA_POSITION_Z,
+        //                                 RIGHT_CAMERA_ROTATION_ROLL,
+        //                                 RIGHT_CAMERA_ROTATION_PITCH,
+        //                                 RIGHT_CAMERA_ROTATION_YAW
+        //                                 );
+
+        cameras = List.of(m_backCamera);//, m_leftCamera, m_rightCamera);
     }
     
 
     // ------ METHODS ------ \\
 
     /**
-     * <h3>getHubTrackingCamera</h3>
+     * <h3>getBackCamera</h3>
      * 
-     * Returns the PhotonCamera representing the hub aiming camera
-     * s
-     * @return a reference to the hub camera
+     * Returns the PhotonCamera representing the back camera
+     * 
+     * @return a reference to the back camera
      */
-    public PhotonCamera getHubTrackingCamera() {
-        return m_PhotonCamera;
+    public PhotonCamera getBackCamera() { 
+        return m_backCamera.getPhotonCamera();
     }
+
+    /**
+     * <h3>getLeftCamera</h3>
+     * 
+     * Returns the PhotonCamera representing the left camera
+     * 
+     * @return a reference to the left camera
+     */
+    // public PhotonCamera getLeftCamera() { 
+    //     return m_leftCamera.getPhotonCamera();
+    // }
+
+    /**
+     * <h3>getRightCamera</h3>
+     * 
+     * Returns the PhotonCamera representing the right camera
+     * 
+     * @return a reference to the right camera
+     */
+    // public PhotonCamera getRightCamera() { 
+    //     return m_rightCamera.getPhotonCamera();
+    // }
 
     /**
      * <h3>updateCameraPos</h3>
@@ -196,7 +317,7 @@ public class OdometryUtility {
         final List<AprilTag> foundTags = new ArrayList<AprilTag>();
     
         for(int i = 0; i < this.cameras.size(); i++) {
-            final PhotonCamera camera = this.cameras.get(i);
+            final PhotonCamera camera = this.cameras.get(i).getPhotonCamera();
             final PhotonPipelineResult result = camera.getLatestResult();
             if (!result.hasTargets()) continue;
     
@@ -207,48 +328,36 @@ public class OdometryUtility {
     
             targets.stream().forEach( target -> {
                 final int fiducialId = target.getFiducialId();
-    
+  
+                Optional<Pose3d> unknownTag = this.tagLayout.getTagPose(fiducialId); 
+
+            if(!unknownTag.isEmpty()){
                 corners.addAll(target.getDetectedCorners());
                 foundTags.add(new AprilTag(
                     fiducialId,
-                    this.tagLayout.getTagPose(fiducialId).get()
+                    unknownTag.get()
                 ));
-            });
+            }
+        });
     
-            if (targets.size() > 1) {
+            if (targets.size() > 0) {
     
-                CameraProperties cameraProp;
-                PNPResults pnpResults = null;
-                try {
-                    cameraProp = new CameraProperties("CameraConfigs/Camera1/config.json", 640, 480);
-                    pnpResults = OdometryUtility.estimateCamPosePNP(cameraProp, corners, foundTags);
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                } 
-                final Transform3d robotToCameraPose = new Transform3d(
-                new Translation3d(
-                    Units.inchesToMeters(CAMERA_POSITION_X),
-                    Units.inchesToMeters(CAMERA_POSITION_Y),
-                    Units.inchesToMeters(CAMERA_POSITION_Z)
-                ),
-                new Rotation3d(
-                    0,
-                    -Math.toRadians(18),
-                    Math.toRadians(30)
-                )
-            );
+                CameraProperties cameraProp = cameras.get(i).getCameraProp();
+                PNPResults pnpResults = OdometryUtility.estimateCamPosePNP(cameraProp, corners, foundTags);;
+                final Transform3d robotToCameraPose = cameras.get(i).getRobotToCameraPose();
     
                 SmartDashboard.putNumber(camera.getName() + "/multi/ambiguity", pnpResults.ambiguity);
                 SmartDashboard.putNumber(camera.getName() + "/multi/bestErr", pnpResults.bestReprojErr);
                 SmartDashboard.putNumber(camera.getName() + "/multi/altErr", pnpResults.altReprojErr);
     
-                if(pnpResults != null && pnpResults.bestReprojErr < 0.15) {
+                // TODO reduce back to .15
+                if(pnpResults != null && pnpResults.bestReprojErr < 0.95) {
                     final Pose3d pose = new Pose3d()
                         .plus(pnpResults.best)
                         .plus(robotToCameraPose.inverse());
                     
                     addVisionMeasurement(pose.toPose2d(), result.getLatencyMillis() / 1000.0);
+                    SmartDashboard.putNumberArray("AdjustedRobotPose", LogUtil.toPoseArray2d(pose.toPose2d()));
                 }
             }
         }
@@ -266,5 +375,18 @@ public class OdometryUtility {
             measurement,
             Timer.getFPGATimestamp() - latencySeconds
         );
+    }
+
+    /**
+     * <h3>resetPosition</h3>
+     * 
+     * resets the position in the pose estimator
+     * 
+     * @param yaw a rotation of the robot
+     * @param modulePositions the positions of the swerve modules
+     * @param initialPose the initial pse2d of the robot
+     */
+    public void resetPosition(Rotation2d yaw, SwerveModulePosition[] modulePositions, Pose2d initialPose) {
+        m_PoseEstimator.resetPosition(yaw, modulePositions, initialPose);
     }
 }

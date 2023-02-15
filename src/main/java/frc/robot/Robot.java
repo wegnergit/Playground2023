@@ -12,9 +12,11 @@ import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
-import edu.wpi.first.wpilibj.Threads;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.utilities.OdometryUtility;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -40,6 +42,19 @@ public class Robot extends LoggedRobot {
    */
   @Override
   public void robotInit() {
+
+    // Allow pyshical Photonvison cammera to be used while simulating on PC
+    // https://docs.photonvision.org/en/latest/docs/programming/photonlib/hardware-in-the-loop-sim.html
+    // NOTE Requires Photolib camera to run network server!!!! But this will break on setting is on when used on robot
+    if(RobotBase.isSimulation() && OdometryUtility.CONNECTED_PHOTOVISION_CAMERA) {
+      NetworkTableInstance inst = NetworkTableInstance.getDefault();
+      inst.stopServer();
+      // Change the IP address in the below function to the IP address you use to connect to the PhotonVision UI.
+      inst.setServer(OdometryUtility.PHOTOVISION_NETWORK_SERVER); // photonvision.local
+      inst.startClient4("Robot Simulation");
+   }
+
+
     //Advantage Kit
     Logger logger = Logger.getInstance();
     //TODO setUseTiming(Constants.getMode() != Mode.REPLAY);
@@ -88,7 +103,6 @@ public class Robot extends LoggedRobot {
     }
     logger.start();
 
-
     
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
@@ -104,9 +118,6 @@ public class Robot extends LoggedRobot {
    */
   @Override
   public void robotPeriodic() {
-    // From AdvantageKit example TODO MORE stuff done it their example
-    Threads.setCurrentThreadPriority(true, 99);
-
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
@@ -114,7 +125,6 @@ public class Robot extends LoggedRobot {
     CommandScheduler.getInstance().run();
     //Needed for simulation
     m_robotContainer.periodic();
-    Threads.setCurrentThreadPriority(true, 10);
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
