@@ -12,6 +12,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
@@ -76,9 +77,12 @@ public class PPSwerveControllerCommandWithIsFinish extends PPSwerveControllerCom
         // The pathpoint is the starting and ending positions of the robot
         PathPoint currentPathPoint = new PathPoint(currentPose.getTranslation(),angle);
         PathPoint targetPathPoint = new PathPoint(m_targetPose.getTranslation(),angle, m_targetPose.getRotation());
-        
+
+        PathPoint MidPathPoint = new PathPoint(new Translation2d(3,1),angle, m_targetPose.getRotation());
+        // PathPoint MidPathPoint = new PathPoint(new Translation2d(3,6),angle, m_targetPose.getRotation());
+
         PathConstraints pathConstraints = new PathConstraints(MAX_SPEED, MAX_ACCELERATION);
-        super.trajectory = PathPlanner.generatePath(pathConstraints, false, currentPathPoint, targetPathPoint);        
+        super.trajectory = PathPlanner.generatePath(pathConstraints, false, currentPathPoint, MidPathPoint, targetPathPoint);        
         super.initialize();
     }
 
