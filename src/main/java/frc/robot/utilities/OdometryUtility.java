@@ -28,6 +28,7 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.utilities.vision.estimation.CameraProperties;
 import frc.robot.utilities.vision.estimation.OpenCVHelp;
@@ -141,6 +142,8 @@ public class OdometryUtility {
             DriverStation.reportWarning("Unable to load ChargedUp AprilTag resource file" + 
                                         AprilTagFields.k2023ChargedUp.m_resourceFile, e.getStackTrace());
         }
+        // Adjusts AprilTag position based on 0,0 
+        setOriginBasedOnAlliance();
 
         m_PoseEstimator = new SwerveDrivePoseEstimator(
             m_swerveDriveKinematics,
@@ -197,6 +200,35 @@ public class OdometryUtility {
 
         // cameras = List.of(m_backCamera);//, m_leftCamera, m_rightCamera);
         cameras = List.of();
+    }
+
+    public void setOriginBasedOnAlliance() {
+
+        for(int i=1; i<9;i++) {
+            Optional<Pose3d> pose = tagLayout.getTagPose(i);
+            if(pose != null && !pose.isEmpty() )
+            {
+              SmartDashboard.putNumberArray("AprilTags/Before/"+i, LogUtil.toPoseArray3d(pose.get()));
+            }
+        }
+  
+        AprilTagFieldLayout.OriginPosition originPos;
+        if(DriverStation.getAlliance() == Alliance.Blue) {
+            originPos = AprilTagFieldLayout.OriginPosition.kBlueAllianceWallRightSide;
+        } else {
+            originPos = AprilTagFieldLayout.OriginPosition.kRedAllianceWallRightSide;
+        }
+        tagLayout.setOrigin(originPos);
+
+        for(int i=1; i<9;i++) {
+          Optional<Pose3d> pose = tagLayout.getTagPose(i);
+          if(pose != null && !pose.isEmpty() )
+          {
+            SmartDashboard.putNumberArray("AprilTags/After/"+i, LogUtil.toPoseArray3d(pose.get()));
+          }
+        }
+    
+  
     }
 
     /**

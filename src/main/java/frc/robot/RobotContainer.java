@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
 import frc.robot.utilities.RobotInformation;
 import frc.robot.utilities.SwerveModuleConstants;
@@ -310,6 +311,10 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
+    // TODO if not FMS controlled add to teleop init too (for practice match and Red/Blue alliance need to be correctly set)
+    if(!DriverStation.isFMSAttached()) {
+      m_robotDrive.setOriginBasedOnAlliance();
+    }
     return m_autoManager.getAutonomousCommand();
     //TODO determine if autoManager needs to have andThen(() -> m_robotDrive.drive(0, 0, 0, false,false));
   }
@@ -320,6 +325,9 @@ public class RobotContainer {
   }
 
   public void disabledInit() {
+    if(!DriverStation.isFMSAttached()) {
+      m_autoManager.addOptionToChooser();
+    }
   }
  
   private void configureButtonBindings_backup() {
@@ -474,5 +482,13 @@ public class RobotContainer {
     //     new ElevatorMoveCommand(m_elevatorSubsystem, Units.inchesToMeters(0)))
     //   );
     
+  }
+
+  public void teleopInit() {
+      // TODO if not FMS controlled add to teleop init too (for practice match and Red/Blue alliance need to be correctly set)
+      if(!DriverStation.isFMSAttached()) {
+        m_robotDrive.setOriginBasedOnAlliance();
+      }
+  
   }
 }

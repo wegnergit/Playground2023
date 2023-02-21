@@ -270,4 +270,8 @@ public class SwerveDrive extends SubsystemBase {
       mod.resetAngleToAbsolute();
     }
   }
+
+  public void setOriginBasedOnAlliance() {
+    m_aprilCameraOne.setOriginBasedOnAlliance();
+  }
 }

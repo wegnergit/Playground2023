@@ -60,6 +60,16 @@ public class AutoCommandManager {
     }
 
     private final SendableChooser<Command> m_chooser = new SendableChooser<>();
+    private Command taxiOneBall;
+    private Command taxiOneBallAutoBuildCommand;
+    private Command BlueLeftBalanceCommand;
+    private Command ChargeStationcommand;
+    private Command MiddleCubeEngagecommand;
+    private Command BlueRightCommand;
+    private Command BlueLeftCone;
+    private Command BlueLeft;
+    private Command ScoreHighCone;
+    private Command ScoreMidCone;
 
     private static final boolean TUNE_PID = true;
     //TODO TUNE FOR GHOST
@@ -104,26 +114,30 @@ public class AutoCommandManager {
         SwerveDrive s_SwerveDrive = (SwerveDrive) subsystemMap.get(subNames.SwerveDriveSubsystem.toString());
         
         //Autonomous Commands
-        TaxiOneBall taxiOneBall = new TaxiOneBall( s_SwerveDrive);
-        Command taxiOneBallAutoBuildCommand = new PathPlannerCommand(s_SwerveDrive, "TaxiOneBall", eventCommandMap);
-        Command BlueLeftBalanceCommand = new PathPlannerCommand(s_SwerveDrive, "BlueLeftConeBalance", eventCommandMap, new AutoBalanceCommand(s_SwerveDrive));
-        Command ChargeStationcommand = new PathPlannerCommand(s_SwerveDrive, "ChargingStation", eventCommandMap, new AutoBalanceCommand(s_SwerveDrive));
-        Command MiddleCubeEngagecommand = new PathPlannerCommand(s_SwerveDrive, "MiddleCubeEngage", eventCommandMap, new AutoBalanceCommand(s_SwerveDrive));
-        Command BlueRightCommand = new PathPlannerCommand(s_SwerveDrive, "BlueRight", eventCommandMap);
-        Command BlueLeftCone = new PathPlannerCommand(s_SwerveDrive, "BlueLeftCone", eventCommandMap);
-        Command BlueLeft = new PathPlannerCommand(s_SwerveDrive, "BlueLeft", eventCommandMap);
-        Command ScoreHighCone = new PathPlannerCommand(s_SwerveDrive, "ScoreHighCone", eventCommandMap);
-        Command ScoreMidCone = new PathPlannerCommand(s_SwerveDrive, "ScoreMidCone", eventCommandMap);
+        taxiOneBall = new TaxiOneBall( s_SwerveDrive);
+        taxiOneBallAutoBuildCommand = new PathPlannerCommand(s_SwerveDrive, "TaxiOneBall", eventCommandMap);
+        BlueLeftBalanceCommand = new PathPlannerCommand(s_SwerveDrive, "BlueLeftConeBalance", eventCommandMap, new AutoBalanceCommand(s_SwerveDrive));
+        ChargeStationcommand = new PathPlannerCommand(s_SwerveDrive, "ChargingStation", eventCommandMap, new AutoBalanceCommand(s_SwerveDrive));
+        MiddleCubeEngagecommand = new PathPlannerCommand(s_SwerveDrive, "MiddleCubeEngage", eventCommandMap, new AutoBalanceCommand(s_SwerveDrive));
+        BlueRightCommand = new PathPlannerCommand(s_SwerveDrive, "BlueRight", eventCommandMap);
+        BlueLeftCone = new PathPlannerCommand(s_SwerveDrive, "BlueLeftCone", eventCommandMap);
+        BlueLeft = new PathPlannerCommand(s_SwerveDrive, "BlueLeft", eventCommandMap);
+        ScoreHighCone = new PathPlannerCommand(s_SwerveDrive, "ScoreHighCone", eventCommandMap);
+        ScoreMidCone = new PathPlannerCommand(s_SwerveDrive, "ScoreMidCone", eventCommandMap);
 
+        addOptionToChooser();
+    }
+
+    public void addOptionToChooser() {
         // Adding options to the chooser in Shuffleboard/smartdashboard
-        Boolean isBlue = (DriverStation.getAlliance() == Alliance.Blue);
+        boolean isBlue = (DriverStation.getAlliance() == Alliance.Blue);
+        
         m_chooser.setDefaultOption("None", null);
         m_chooser.addOption("Taxi One Ball", taxiOneBall);
         m_chooser.addOption("taxiOneBallAutoBuild", taxiOneBallAutoBuildCommand);
         m_chooser.addOption("score cone grab cone balance", BlueLeftBalanceCommand);
         m_chooser.addOption("Engage Charging Station", ChargeStationcommand);
         m_chooser.addOption("MiddleCubeEngagecommand", MiddleCubeEngagecommand);
-
         m_chooser.addOption(isBlue ? "BlueRightCommand" : "RedLeftCommand", BlueRightCommand);
         m_chooser.addOption(isBlue ? "BlueLeftCone" : "RedRightCone", BlueLeftCone);
         m_chooser.addOption(isBlue ? "BlueLeft" : "RedRight", BlueLeft);
