@@ -48,16 +48,13 @@ public class PathPlannerCommand extends SequentialCommandGroup {
         List<PathPlannerTrajectory> loadPathGroup = PathPlanner.loadPathGroup(pathName, 
              false, pathConstraints);
         
-        var thetaController = s_Swerve.getAutoThetaController();
-        thetaController.enableContinuousInput(-180.0, 180.0); //-Math.PI, Math.PI);
-
         SwerveAutoBuilder autoBuilder = 
             new SwerveAutoBuilder(
                 s_Swerve::getPose, //Using Pose Swerve estimator
                 s_Swerve::resetOdometry, //pose2D consumer, used to reset odometry at beginning of zero
                 SwerveDrive.getSwerveKinematics(),
-                getPIDConstants(s_Swerve.getAutoXController()), //PID constants to correct for translation error (X and Y)
-                getPIDConstants(thetaController), //PID constants to correct for rotation error (used to create the rotation controller)
+                new PIDConstants(1.0, 0.0, 0.0), //PID constants to correct for translation error (X and Y)
+                new PIDConstants(1.0, 0.0, 0.0), //PID constants to correct for rotation error (used to create the rotation controller)
                 s_Swerve::setSwerveModuleStates,
                 eventCommandMap, 
                 true, // TODO Should the path be automatically mirrored depending on alliance color
