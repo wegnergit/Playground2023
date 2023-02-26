@@ -1,5 +1,7 @@
 package frc.robot.commands;
 
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.LEDsubsystem;
 
@@ -13,14 +15,14 @@ public class LEDCommand extends CommandBase {
 
     private LedPatterns m_pattern;
     private LEDsubsystem m_LEDSubsystem;
+    private boolean m_canRunDisabled = false;
 
     public static enum LedPatterns{
         CONEREQUEST,
         CUBEREQUEST,
         CONEAQUIRED,
         CUBEAQUIRED,
-        BLUEALLIANCE,
-        REDALLIANCE,
+        ALLIANCE,
         DISABLED,
         TEAMCOLORS,
         RANDOMLED,
@@ -30,17 +32,22 @@ public class LEDCommand extends CommandBase {
     /**
      * <h3>LEDCommand</h3>
      * Create LED command and pattern and assign variables to values
+     * Sets m_canRunDisabled to True when the Disabled LED pattern is active in order to let it run when it disabled
      * @param ledSubsystem
      * @param pattern
      */
     public LEDCommand(LEDsubsystem ledSubsystem, LedPatterns pattern){
         m_pattern = pattern;
         m_LEDSubsystem = ledSubsystem;
-        addRequirements (m_LEDSubsystem);
+        addRequirements(m_LEDSubsystem);
+
+        if(pattern == LedPatterns.DISABLED){
+            m_canRunDisabled = true;
+        }
     }
     /**
      * <h3>end</h3>
-     * Ends LED patterns
+     * Interrupts LED Patterns
      * @param interrupted
      */
     @Override
@@ -49,7 +56,7 @@ public class LEDCommand extends CommandBase {
     }
     /**
      * <h3>initalize</h3>
-     * Intialize all the LED commands and set up thier correct DIO pins
+     * Intialize all the LED commands and set up thier correct DIO pins (1 = true, 0 = false)
      */
     @Override
     public void initialize(){
@@ -66,11 +73,15 @@ public class LEDCommand extends CommandBase {
             case CONEAQUIRED:
                 m_LEDSubsystem.setPins(false, false, false, true);
                 break;
-            case BLUEALLIANCE:
-                m_LEDSubsystem.setPins(true, true, false, false);
-                break;
-            case REDALLIANCE:
-                m_LEDSubsystem.setPins(true,true, true, false);
+            case ALLIANCE:
+                if(DriverStation.getAlliance() == Alliance.Blue){
+                    // Blue Pins
+                    m_LEDSubsystem.setPins(true, true, false, false);
+                }
+                else{
+                    // Red Pina
+                    m_LEDSubsystem.setPins(true,true, true, false);
+                }
                 break;
             case DISABLED:
                 m_LEDSubsystem.setPins(false, false, false, false);
@@ -86,6 +97,17 @@ public class LEDCommand extends CommandBase {
                 break;
 
         }
+    }
+
+    /**
+     * <h3>isFinished</h3>
+     * Ensures that the disabled pattern can run when the robot is disabled
+     * @return m_canRunDisabled
+     */
+    
+    @Override
+    public boolean runsWhenDisabled() {
+        return m_canRunDisabled;
     }
     /**
      * <h3>isFinished</h3>
