@@ -3,12 +3,17 @@ package frc.robot.utilities;
 import java.util.Arrays;
 
 import edu.wpi.first.wpilibj.Preferences;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.RobotContainer;
 
 
 public class RobotInformation {
 
     private static final String WHICH_ROBOT_PREFERENCE_KEY = "WHICH_ROBOT";
+    private static final String COMPETITION_ROBOT_SERIAL_NUMBER = "XX-XX-TODO-SET-VALUE-XX";
+    private static final String m_serialNumber = RobotController.getSerialNumber();
+
 
     //sets the whichrobot input to which ever robot name it is  
     public enum WhichRobot {
@@ -51,7 +56,8 @@ public class RobotInformation {
             SwerveModuleConstants backLeft,
             SwerveModuleConstants backRight) {
         m_WhichRobot = whichRobot;
-        SmartDashboard.putString("RobotInformation/RobotConfiguration", whichRobot.toString());
+        SmartDashboard.putString(this.getClass().getSimpleName()+"/RobotConfiguration", whichRobot.toString());
+        SmartDashboard.putString(this.getClass().getSimpleName()+"/SerialNumber", m_serialNumber);
         m_FrontLeft = frontLeft;
         m_FrontRight = frontRight;
         m_BackLeft = backLeft;
@@ -121,6 +127,8 @@ public class RobotInformation {
      * @return WhichRobot
      */
     public static WhichRobot queryWhichRobotUsingPreferences() {
+      // TODO REMOVE only for testing if serial number
+      queryWhichRobotUsingRoborioSerialNumber();
       // https://docs.wpilib.org/en/stable/docs/software/dashboards/smartdashboard/smartdashboard-intro.html
       // To set value must run SmartDashboard when robot/simulation is connected.
       // View->Add...->Robot Preferences  
@@ -128,4 +136,14 @@ public class RobotInformation {
       String whichRobotString = Preferences.getString(WHICH_ROBOT_PREFERENCE_KEY, WhichRobot.PRACTICE_ROBOT.toString());
       return WhichRobot.getEnum(whichRobotString);
     }
+
+    public static WhichRobot queryWhichRobotUsingRoborioSerialNumber() {
+      WhichRobot whichRobot = WhichRobot.PRACTICE_ROBOT;
+      // https://first.wpi.edu/wpilib/allwpilib/docs/release/java/edu/wpi/first/wpilibj/RobotController.html#getSerialNumber()
+      if(m_serialNumber.equals(COMPETITION_ROBOT_SERIAL_NUMBER)) {
+         whichRobot = WhichRobot.COMPETITION_ROBOT;
+      }
+      return whichRobot;
+    }
+
 }
