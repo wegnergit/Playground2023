@@ -45,15 +45,5 @@
       }
     }
   ],
-  "maxVelocity": 2.0,
-  "maxAcceleration": 2.2,
-  "isReversed": null,
-  "markers": [
-    {
-      "position": 1.0,
-      "names": [
-        "scoreHighCone"
-      ]
-    }
-  ]
+  "markers": []
 }

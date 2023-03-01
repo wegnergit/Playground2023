@@ -93,13 +93,13 @@ public class RobotContainer {
     //https://buildmedia.readthedocs.org/media/pdf/phoenix-documentation/latest/phoenix-documentation.pdf
     //page 100
     RobotInformation robotInfo = 
-      (whichRobot == WhichRobot.COMPETITION_ROBOT) ?
+     (whichRobot == WhichRobot.COMPETITION_ROBOT) ?
         // Competition robot attributes
         new RobotInformation(whichRobot,
-          new SwerveModuleConstants(8, 9, 9, 200.479),
-          new SwerveModuleConstants(11, 10, 10, 11.338),
-          new SwerveModuleConstants(1, 3, 3, 108.193  ),
-          new SwerveModuleConstants(18, 19, 19, 117.158  ))
+          new SwerveModuleConstants(8, 9, 9, 198.896),
+          new SwerveModuleConstants(11, 10, 10, 9.141),
+          new SwerveModuleConstants(1, 3, 3, 119.180),
+          new SwerveModuleConstants(18, 19, 19, 207.773))
         :
         // Non-Competition robot attributes
         new RobotInformation(whichRobot,
@@ -155,8 +155,8 @@ public class RobotContainer {
   
   private final RotateCommand m_rotateCommand = new RotateCommand(new Pose2d( 8.2423, 4.0513, new Rotation2d(0.0)), m_robotDrive);
   private final AutoBalanceCommand m_autoBalanceCommand = new AutoBalanceCommand(m_robotDrive);
-  private final ExtendIntakeCommand m_ExtendIntakeCommand = new ExtendIntakeCommand(-3, m_ExtendIntakeMotorSubsystem);
-  private final ExtendIntakeCommand m_RetractIntakeCommand = new ExtendIntakeCommand(0, m_ExtendIntakeMotorSubsystem);
+  private final ExtendIntakeCommand m_ExtendIntakeCommand = new ExtendIntakeCommand(-2, m_ExtendIntakeMotorSubsystem);
+  private final ExtendIntakeCommand m_RetractIntakeCommand = new ExtendIntakeCommand(2, m_ExtendIntakeMotorSubsystem);
   private final IntakeRollerCommand m_IntakeRoller = new IntakeRollerCommand(2, m_IntakeRollerMotorSubsystem);
   private final IntakeRollerCommand m_EjectRoller = new IntakeRollerCommand(-2, m_IntakeRollerMotorSubsystem);
   private final PitchIntakeCommand m_HighPitchIntakeCommand = new PitchIntakeCommand(m_PitchIntakeSubsystem, 90.0);
@@ -199,15 +199,15 @@ public class RobotContainer {
     // Auto Commands
 
     // TODO Add markers for real commands/paths
-    eventCommandMap.put("scoreHighCone", m_AutohighTargetCommand);
+    //eventCommandMap.put("scoreHighCone", m_AutohighTargetCommand);
     // eventCommandMap.put("scoreMidCone", m_AutoMidTargetCommand);
-    // eventCommandMap.put("armIntakeCone", 
-      // CommandFactoryUtility.createArmIntakeLowCommand(m_elevatorSubsystem, m_armSubsystem, m_manipulatorSubsystem));
+    eventCommandMap.put("armIntakeCone", 
+       CommandFactoryUtility.createArmIntakeLowCommand(m_elevatorSubsystem, m_armSubsystem, m_manipulatorSubsystem));
       //.andThen(new WaitCommand(2))
       //.andThen(CommandFactoryUtility.createStowArmCommand(m_elevatorSubsystem, m_armSubsystem, m_manipulatorSubsystem)));
-    // eventCommandMap.put("stowArm" , new WaitCommand(0.5).andThen( CommandFactoryUtility.createStowArmCommand(m_elevatorSubsystem, m_armSubsystem, m_manipulatorSubsystem)));
+    eventCommandMap.put("stowArm" , new WaitCommand(0.5).andThen( CommandFactoryUtility.createStowArmCommand(m_elevatorSubsystem, m_armSubsystem, m_manipulatorSubsystem)));
     //TODO remove
-    //eventCommandMap = eventCommandMap = new HashMap<>();
+    eventCommandMap = eventCommandMap = new HashMap<>();
     m_autoManager = new AutoCommandManager();
     m_autoManager.addSubsystem(subNames.SwerveDriveSubsystem, m_robotDrive);
     m_autoManager.initCommands(eventCommandMap);
@@ -294,9 +294,26 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
+        // If not FMS controlled add to teleop init too (for practice match and Red/Blue alliance need to be correctly set)
+    if(!DriverStation.isFMSAttached()) {
+      m_robotDrive.setOriginBasedOnAlliance();
+    }
     return m_autoManager.getAutonomousCommand();
     //TODO determine if autoManager needs to have andThen(() -> m_robotDrive.drive(0, 0, 0, false,false));
   }
+
+  /**
+   * Method to run before teleop starts, needed to help reset April Tag direction before teleop if operator does not do 
+   * autonomous first.
+   */
+  public void teleopInit() {
+    // If not FMS controlled add to teleop init too (for practice match and Red/Blue alliance need to be correctly set)
+    if(!DriverStation.isFMSAttached()) {
+      m_robotDrive.setOriginBasedOnAlliance();
+    }
+
+}
+  
 
   public void periodic() {
     m_fieldSim.periodic();
@@ -308,14 +325,13 @@ public class RobotContainer {
  
   private void configureButtonBindings_Intake(){
     m_codriverController.leftBumper().whileTrue(m_EjectRoller);
-    m_codriverController.rightTrigger().whileTrue((m_ExtendIntakeCommand.andThen(m_IntakeRoller)));
-    m_codriverController.y()
-      .and(m_codriverController.rightTrigger())
-      .whileTrue(m_HighPitchIntakeCommand); 
+    // will only run after it checks that a and y is not pressed on the codrivercontroller.
+    m_codriverController.a().negate().and(m_codriverController.y().negate()).and(m_codriverController.rightTrigger()).whileTrue(m_ExtendIntakeCommand.alongWith(m_IntakeRoller));
+    m_codriverController.y().and(m_codriverController.rightTrigger())
+      .whileTrue(m_HighPitchIntakeCommand.alongWith(new IntakeRollerCommand(2, m_IntakeRollerMotorSubsystem)));
     m_codriverController.a()
       .and(m_codriverController.rightTrigger())
-      .whileTrue(m_LowPitchIntakeCommand); 
-  
+      .whileTrue(m_LowPitchIntakeCommand.alongWith(new IntakeRollerCommand(2, m_IntakeRollerMotorSubsystem)));
   }
   private void configureButtonBindings_backup() {
     // m_codriverController.y().onTrue(new SetArmDegreesCommand(m_armSubsystem, m_manipulatorSubsystem,110, 45))
