@@ -26,6 +26,7 @@ import frc.robot.subsystems.SwerveDrive;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.commands.ExtendIntakeCommand;
 import frc.robot.commands.IntakeRollerCommand;
@@ -149,8 +150,8 @@ public class RobotContainer {
   private final ExtendIntakeCommand m_RetractIntakeCommand = new ExtendIntakeCommand(2, m_ExtendIntakeMotorSubsystem);
   private final IntakeRollerCommand m_IntakeRoller = new IntakeRollerCommand(2, m_IntakeRollerMotorSubsystem);
   private final IntakeRollerCommand m_EjectRoller = new IntakeRollerCommand(-2, m_IntakeRollerMotorSubsystem);
-  private final PitchIntakeCommand m_HighPitchIntakeCommand = new PitchIntakeCommand(m_PitchIntakeSubsystem, 90.0);
-  private final PitchIntakeCommand m_LowPitchIntakeCommand = new PitchIntakeCommand(m_PitchIntakeSubsystem, -90.0);
+  private final PitchIntakeCommand m_HighPitchIntakeCommand = new PitchIntakeCommand(m_PitchIntakeSubsystem, 180.0);
+  private final PitchIntakeCommand m_LowPitchIntakeCommand = new PitchIntakeCommand(m_PitchIntakeSubsystem, 0.0);
   //private PitchIntakeCommand m_CurrentPitchIntakeCommand;
     
   private AutoCommandManager m_autoManager;
@@ -269,7 +270,7 @@ public class RobotContainer {
       
     //--CODRIVER CONTROLLER--//
     // Arm intake
-    // m_codriverController.leftBumper().whileTrue(m_EjectRoller); // Eject intake button
+    m_codriverController.leftBumper().whileTrue(m_EjectRoller); // Eject intake button
 
     // Will eventually be Intake Handoff (Intake from bottom gives game bject to top)
     // m_codriverController.leftTrigger().onTrue()
@@ -278,17 +279,17 @@ public class RobotContainer {
     m_codriverController.leftTrigger().onTrue(CommandFactoryUtility.createSingleSubstationCommand(m_elevatorSubsystem, m_armSubsystem, m_manipulatorSubsystem))
       .onFalse(CommandFactoryUtility.createStowArmCommand(m_elevatorSubsystem, m_armSubsystem, m_manipulatorSubsystem));
 
-    // m_codriverController.a().negate()
-    //   .and(m_codriverController.y().negate())
-    //    .and(m_codriverController.rightTrigger())
-    //      .whileTrue(m_ExtendIntakeCommand.alongWith(m_IntakeRoller));
-    // m_codriverController.y()
-    //   .and(m_codriverController.rightTrigger())
-    //   .whileTrue(m_HighPitchIntakeCommand); 
-    // m_codriverController.a()
-    //   .and(m_codriverController.rightTrigger())
-    //   .whileTrue(m_LowPitchIntakeCommand);
-    // m_codriverController.rightTrigger().negate().onTrue(m_RetractIntakeCommand);
+    m_codriverController.a().negate()
+      .and(m_codriverController.y().negate())
+       .and(m_codriverController.rightTrigger())
+         .whileTrue(m_ExtendIntakeCommand.alongWith(m_IntakeRoller));
+    m_codriverController.y()
+      .and(m_codriverController.rightTrigger())
+      .whileTrue(m_HighPitchIntakeCommand); 
+    m_codriverController.a()
+      .and(m_codriverController.rightTrigger())
+      .whileTrue(m_LowPitchIntakeCommand);
+    m_codriverController.rightTrigger().negate().onTrue(m_RetractIntakeCommand.alongWith(new PitchIntakeCommand(m_PitchIntakeSubsystem, -90.0)));
   
     //Arm positions
     m_codriverController.povUp().toggleOnTrue(m_targetScorePositionUtility.setDesiredTargetCommand(Target.high));
@@ -298,6 +299,13 @@ public class RobotContainer {
   
     //Cube and Cone selector
     m_codriverController.b().onTrue(m_RunConeRequestLEDPattern).onFalse(m_RunCubeRequestLEDPattern);
+
+    if(true){
+      m_codriverController.x().onTrue(new InstantCommand(() ->m_armSubsystem.setPosition(m_armSubsystem.getPosition()+5.0)));
+      m_codriverController.b().onTrue(new InstantCommand(() ->m_armSubsystem.setPosition(m_armSubsystem.getPosition()-5.0)));
+      m_codriverController.y().onTrue(new InstantCommand(() ->m_manipulatorSubsystem.setPosition(m_manipulatorSubsystem.getPosition()+5.0)));
+      m_codriverController.a().onTrue(new InstantCommand(() ->m_manipulatorSubsystem.setPosition(m_manipulatorSubsystem.getPosition()-5.0)));
+    }
 
     // TODO REMOVE this is not how determine it xboxcontroller is working!!
     // // Trigger indicator

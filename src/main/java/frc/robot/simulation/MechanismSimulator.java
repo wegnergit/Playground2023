@@ -125,7 +125,7 @@ public class MechanismSimulator {
         m_elevator.setLength(elevator.getElevatorPosition());
         m_arm.setAngle(arm.getPosition()-45);
         m_hand.setAngle(manipulator.getPosition()-arm.getPosition()-45);
-        m_intake.setAngle(intake.getEncoderPosition());
+        m_intake.setAngle(intake.getEncoderPosition()-90.0);
 
         // Elevator Position in Advantage Scope
         double[] elevatorPosition = {

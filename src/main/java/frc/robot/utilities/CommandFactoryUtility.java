@@ -196,7 +196,7 @@ public class CommandFactoryUtility {
     public static Command createExtendIntakeCommand(
         ExtendIntakeMotorSubsystem extendIntakeMotorSubsystem, 
         IntakeRollerMotorSubsystem intakeRollerMotorSubsystem) {
-        return new ExtendIntakeCommand(-6, 
+        return new ExtendIntakeCommand(-2, 
             extendIntakeMotorSubsystem)
             .andThen(createIntakeRollerCommand(intakeRollerMotorSubsystem));
     }
