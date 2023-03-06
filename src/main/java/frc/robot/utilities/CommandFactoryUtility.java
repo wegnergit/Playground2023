@@ -7,6 +7,8 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.ConditionalCommand;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -183,7 +185,6 @@ public class CommandFactoryUtility {
     public static Command createArmIntakeUpRightCommand(
         ElevatorSubsystem m_elevatorSubsystem,
         ArmSubsystem m_armSubsystem,
-
         ManipulatorSubsystem m_manipulatorSubsystem) {
 
         return createArmIntakeCommand(m_elevatorSubsystem, m_armSubsystem, m_manipulatorSubsystem, 
@@ -192,6 +193,21 @@ public class CommandFactoryUtility {
             ARM_UPRIGHT_INTAKE_ANGLE, 
             MANIPULATOR_UPRIGHT_INTAKE);
     }
+
+    public static Command createArmIntakeBAckCommand(
+        ElevatorSubsystem m_elevatorSubsystem,
+        ArmSubsystem m_armSubsystem,
+        ManipulatorSubsystem m_manipulatorSubsystem) {
+
+        return createStowArmCommand(m_elevatorSubsystem, m_armSubsystem, m_manipulatorSubsystem)
+            .andThen(createArmIntakeCommand(m_elevatorSubsystem, m_armSubsystem, m_manipulatorSubsystem, 
+                    ELEVATOR_BACK_INTAKE_HEIGHT, 
+                    1.0, 
+                    ARM_BACK_INTAKE_ANGLE, 
+                    MANIPULATOR_BACK_INTAKE));
+    }
+
+    
 
     public static Command createExtendIntakeCommand(
         ExtendIntakeMotorSubsystem extendIntakeMotorSubsystem, 

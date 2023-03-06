@@ -275,9 +275,25 @@ public class RobotContainer {
     // m_codriverController.leftTrigger().onTrue()
 
     // Substation intake
-    m_codriverController.leftTrigger().onTrue(CommandFactoryUtility.createSingleSubstationCommand(m_elevatorSubsystem, m_armSubsystem, m_manipulatorSubsystem))
+    m_codriverController.a()
+      .and(m_codriverController.leftTrigger())
+      .onTrue(CommandFactoryUtility.createSingleSubstationCommand(m_elevatorSubsystem, m_armSubsystem, m_manipulatorSubsystem))
       .onFalse(CommandFactoryUtility.createStowArmCommand(m_elevatorSubsystem, m_armSubsystem, m_manipulatorSubsystem));
-
+      m_codriverController.rightTrigger()
+      .onTrue(
+        new ConditionalCommand(CommandFactoryUtility.createScoreHighCommand(m_elevatorSubsystem, m_armSubsystem, m_manipulatorSubsystem, false), 
+          new ConditionalCommand(
+            CommandFactoryUtility.createScoreMediumCommand(m_elevatorSubsystem, m_armSubsystem, m_manipulatorSubsystem, false), 
+            CommandFactoryUtility.createScoreLowCommand(m_elevatorSubsystem, m_armSubsystem, m_manipulatorSubsystem, false), 
+            m_targetScorePositionUtility::isMedium), 
+          m_targetScorePositionUtility::isHigh)
+      );
+    // Back Arm intake
+    m_codriverController.a().negate()
+      .and(m_codriverController.leftTrigger())
+          .onTrue(CommandFactoryUtility.createArmIntakeBAckCommand(m_elevatorSubsystem, m_armSubsystem, m_manipulatorSubsystem))
+          .onFalse(CommandFactoryUtility.createStowArmCommand(m_elevatorSubsystem, m_armSubsystem, m_manipulatorSubsystem));
+  
     // m_codriverController.a().negate()
     //   .and(m_codriverController.y().negate())
     //    .and(m_codriverController.rightTrigger())
@@ -295,7 +311,8 @@ public class RobotContainer {
     m_codriverController.povLeft().toggleOnTrue(m_targetScorePositionUtility.setDesiredTargetCommand(Target.medium));
     m_codriverController.povRight().toggleOnTrue(m_targetScorePositionUtility.setDesiredTargetCommand(Target.medium));
     m_codriverController.povDown().toggleOnTrue(m_targetScorePositionUtility.setDesiredTargetCommand(Target.low));
-  
+
+
     //Cube and Cone selector
     m_codriverController.b().onTrue(m_RunConeRequestLEDPattern).onFalse(m_RunCubeRequestLEDPattern);
 
