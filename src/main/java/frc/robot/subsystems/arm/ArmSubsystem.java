@@ -67,14 +67,31 @@ public class ArmSubsystem extends SubsystemBase {
 
         // caculate PID and Feet forward angles 
         if (DriverStation.isEnabled() || !Robot.isReal()) {
-            double effort = controller.calculate(m_armIO.getCurrentAngleDegrees(), targetPosition);
-            double feedforward = ff.calculate(Units.degreesToRadians(m_armIO.getCurrentAngleDegrees()), Units.degreesToRadians(m_armIO.getVelocityDegreesPerSecond()));
+            double currentDegrees = m_armIO.getCurrentAngleDegrees();
+            double effort = controller.calculate(currentDegrees, targetPosition);
+            double feedforward = ff.calculate(Units.degreesToRadians(currentDegrees), Units.degreesToRadians(m_armIO.getVelocityDegreesPerSecond()));
+
+
+            // Limit range TODO base on elavator heights
+            double lowLimit = 185.0;
+            double highLimit = 325.0;
+            if(currentDegrees > lowLimit && currentDegrees < highLimit) {
+                if(effort > 0.0 && currentDegrees > highLimit-10.0) {
+                    effort = effort;
+                } else {
+                    if(effort < 0.0 && currentDegrees < lowLimit+10.0) {
+                        effort = effort;
+                    } else {
+                        effort = 0.0;
+                    }
+                }
+            }
 
             effort += feedforward;
             effort = MathUtil.clamp(effort, -6, 6);
 
             m_armIO.setVoltage(effort);
-
+                        
             SmartDashboard.putNumber(this.getClass().getSimpleName()+"/FeedForward", feedforward);
             SmartDashboard.putNumber(this.getClass().getSimpleName()+"/Effort", effort);
             SmartDashboard.putNumber(this.getClass().getSimpleName()+"/Error", controller.getPositionError());

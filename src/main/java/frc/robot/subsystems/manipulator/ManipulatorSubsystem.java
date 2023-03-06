@@ -70,8 +70,21 @@ public class ManipulatorSubsystem extends SubsystemBase {
             
             //Set up Feed Forward
             double feedforward = ff.calculate(Units.degreesToRadians(currentDegrees), Units.degreesToRadians(m_io.getVelocityDegreesPerSecond()));
-
-
+            
+            // Limit range TODO base on elavator heights
+            double lowLimit = 200.0;
+            double highLimit = 300.0;
+            if(currentDegrees > lowLimit && currentDegrees < highLimit) {
+                if(effort > 0.0 && currentDegrees > highLimit-10.0) {
+                    effort = effort;
+                } else {
+                    if(effort < 0.0 && currentDegrees < lowLimit+10.0) {
+                        effort = effort;
+                    } else {
+                        effort = 0.0;
+                    }
+                }
+            }
             effort += feedforward;
             effort = MathUtil.clamp(effort, -8, 8);
 
