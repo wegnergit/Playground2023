@@ -1,6 +1,6 @@
 package frc.robot.subsystems.manipulator;
 
-import org.littletonrobotics.junction.Logger;
+// import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ArmFeedforward;
@@ -67,7 +67,7 @@ public class ManipulatorSubsystem extends SubsystemBase {
      */
     public void setRollerSpeed(double speed) {
         m_io.setRollerSpeed(speed);
-        Logger.getInstance().recordOutput(this.getClass().getSimpleName() + "/ManipulatorSpeed", speed);
+        // Logger.getInstance().recordOutput(this.getClass().getSimpleName() + "/ManipulatorSpeed", speed);
     }
 
     public Command waitUntilCurrentPast(double amps) { 

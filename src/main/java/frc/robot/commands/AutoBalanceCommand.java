@@ -1,6 +1,6 @@
 package frc.robot.commands;
 
-import org.littletonrobotics.junction.Logger;
+// import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -61,9 +61,9 @@ public class AutoBalanceCommand extends Command {
         tempSpeed = MathUtil.clamp(m_swerveDrive.getAutoPitchController().calculate(m_robotPitchInDegrees, 0.0), -1.0, 1.0);
 
         // Logs values to advantage kit
-        Logger.getInstance().recordOutput("AutoBalanceCommand/RobotPitch", m_robotPitchInDegrees);
-        Logger.getInstance().recordOutput("AutoBalanceCommand/degrees", degrees);
-        Logger.getInstance().recordOutput("AutoBalanceCommand/Speed", tempSpeed);
+        // Logger.getInstance().recordOutput("AutoBalanceCommand/RobotPitch", m_robotPitchInDegrees);
+        // Logger.getInstance().recordOutput("AutoBalanceCommand/degrees", degrees);
+        // Logger.getInstance().recordOutput("AutoBalanceCommand/Speed", tempSpeed);
         
         
         // Sets drive to throttle

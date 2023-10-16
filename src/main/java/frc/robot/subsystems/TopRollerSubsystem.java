@@ -1,6 +1,6 @@
 package frc.robot.subsystems;
 
-import org.littletonrobotics.junction.Logger;
+// import org.littletonrobotics.junction.Logger;
 
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
@@ -42,13 +42,13 @@ public class TopRollerSubsystem extends SubsystemBase{
      */
     public void setRollerSpeed(double speed) {
         topRoller.set(speed);
-        Logger.getInstance().recordOutput(this.getClass().getSimpleName() + "/TopRollerspeed", speed);
+        // Logger.getInstance().recordOutput(this.getClass().getSimpleName() + "/TopRollerspeed", speed);
     }
 
     //-- PISTON --\\
     public void togglePiston() {
         rollerPiston.set(!rollerPiston.get());
-        Logger.getInstance().recordOutput(this.getClass().getSimpleName() + "/pistonState", rollerPiston.get());
+        // Logger.getInstance().recordOutput(this.getClass().getSimpleName() + "/pistonState", rollerPiston.get());
     }
     
     public boolean pistonIsOpen() {
@@ -57,6 +57,6 @@ public class TopRollerSubsystem extends SubsystemBase{
 
     public void setPistonState(boolean open) {
         rollerPiston.set(open);
-        Logger.getInstance().recordOutput(this.getClass().getSimpleName() + "/pistonState", rollerPiston.get());
+        // Logger.getInstance().recordOutput(this.getClass().getSimpleName() + "/pistonState", rollerPiston.get());
     }
 }

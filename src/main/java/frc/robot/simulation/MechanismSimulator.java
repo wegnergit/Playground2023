@@ -1,6 +1,6 @@
 package frc.robot.simulation;
 
-import org.littletonrobotics.junction.Logger;
+// import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
@@ -88,10 +88,10 @@ public class MechanismSimulator {
             arm.getPosition(),
             swerve.getHeadingDegrees()
         };
-        Logger.getInstance().recordOutput(this.getClass().getSimpleName()+"/ArmPos", armPosition);
+        // Logger.getInstance().recordOutput(this.getClass().getSimpleName()+"/ArmPos", armPosition);
 
 
         // Sends system simulations to logger
-        Logger.getInstance().recordOutput(this.getClass().getSimpleName()+"/Mech2d", mech);
+        // Logger.getInstance().recordOutput(this.getClass().getSimpleName()+"/Mech2d", mech);
     }
 }

@@ -6,8 +6,9 @@ package frc.robot;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
-import org.littletonrobotics.junction.Logger;
+// import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -53,7 +54,8 @@ import frc.robot.utilities.TargetScorePositionUtility;
  */
 public class RobotContainer {
 
-  Alliance alliance = Alliance.Invalid;
+  Alliance alliance = null; // NOLONGER exists Alliance.Invalid;
+  boolean allianceAssigned = false;
 
   /* Drive Controls */
   private final int translationAxis = XboxController.Axis.kLeftY.value;
@@ -224,15 +226,17 @@ public class RobotContainer {
   }
 
   void checkDSUpdate() {
-    Alliance currentAlliance = DriverStation.getAlliance();
+    Optional <Alliance> currentAllianceOpt = DriverStation.getAlliance();
+    Alliance currentAlliance = currentAllianceOpt.isPresent()?currentAllianceOpt.get():null;
 
     // If we have data, and have a new alliance from last time
-    if (DriverStation.isDSAttached() && currentAlliance != alliance) {
+    if (DriverStation.isDSAttached() && currentAlliance != null && currentAlliance != alliance) {
       // m_robotDrive.setOriginBasedOnAlliance(); no longer used because of April Tags
       alliance = currentAlliance;
+      allianceAssigned = true;
     }
 
-    Logger.getInstance().recordOutput(this.getClass().getSimpleName()+"/currentAlliance", currentAlliance.toString());
+    // Logger.getInstance().recordOutput(this.getClass().getSimpleName()+"/currentAlliance", currentAlliance.toString());
   } 
 
   /**

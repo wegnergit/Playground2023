@@ -3,7 +3,7 @@ package frc.robot.commands;
 import frc.robot.subsystems.SwerveDrive;
 import frc.robot.utilities.RotatePositions;
 
-import org.littletonrobotics.junction.Logger;
+// import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -95,16 +95,16 @@ public class TeleopSwerve extends Command {
         } else {
             m_percentSpeed = SLOW_SPEED;
         }
-        Logger.getInstance().recordOutput("TeleopSwerve/percentSpeed", m_percentSpeed);
+        // ogger.getInstance().recordOutput("TeleopSwerve/percentSpeed", m_percentSpeed);
     }
 
     public void forceSlowSpeed() {
         m_percentSpeed = SLOW_SPEED;
-        Logger.getInstance().recordOutput("TeleopSwerve/percentSpeed", m_percentSpeed);
+        // Logger.getInstance().recordOutput("TeleopSwerve/percentSpeed", m_percentSpeed);
     }
 
     public void forceNormalSpeed() {
         m_percentSpeed = NORMAL_SPEED;
-        Logger.getInstance().recordOutput("TeleopSwerve/percentSpeed", m_percentSpeed);
+        // Logger.getInstance().recordOutput("TeleopSwerve/percentSpeed", m_percentSpeed);
     }
 }

@@ -2,7 +2,7 @@ package frc.robot.autos;
 
 import java.util.*;
 
-import org.littletonrobotics.junction.Logger;
+// import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -100,7 +100,7 @@ public class AutoCommandManager {
                     // Log target pose
                     pp_field2d.setRobotPose(targetPose);
                     // May just want dashboard not on field2d
-                    Logger.getInstance().recordOutput("PathPlanner/DesiredPose",targetPose);
+                    // Logger..getInstance().recordOutput("PathPlanner/DesiredPose",targetPose);
                 },
                 null, // logSetPoint
 
