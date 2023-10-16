@@ -179,7 +179,7 @@ public class SwerveDrive extends SubsystemBase {
     // }
     // Logs information about the robot with AdvantageScope
     // Logger.getInstance().recordOutput("SwerveModuleStates/Measured",
-        getModuleStates());
+    // getModuleStates());
 
     // Log odometry pose
     // Logger.getInstance().recordOutput("Odometry/Robot", m_odometry.getPoseMeters());
