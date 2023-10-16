@@ -14,13 +14,15 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.*;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.autos.AutoCommandManager;
 import frc.robot.utilities.FieldCentricOffset;
-import frc.robot.utilities.OdometryUtility;
+import frc.robot.utilities.GeometryUtils;
 import frc.robot.utilities.SwerveModuleConstants;
 
 public class SwerveDrive extends SubsystemBase {
@@ -41,7 +43,6 @@ public class SwerveDrive extends SubsystemBase {
   private Pigeon2 m_pigeon = new Pigeon2(13, "rio"); // TODO pass in id and canbus CAN.pigeon);
 
   private SwerveDriveOdometry m_odometry;
-  private OdometryUtility m_aprilCameraOne;
 
   private double m_simYaw;
 
@@ -87,13 +88,12 @@ public class SwerveDrive extends SubsystemBase {
         autoXController = new PIDController(AutoCommandManager.kPXController, AutoCommandManager.kIXController, AutoCommandManager.kDXController);
         autoYController = new PIDController(AutoCommandManager.kPYController, AutoCommandManager.kIYController, AutoCommandManager.kDYController);
         autoThetaController = new PIDController(AutoCommandManager.kPThetaController, AutoCommandManager.kIThetaController, AutoCommandManager.kDThetaController);
-        autoPitchController = new PIDController(1, 0, 0);
+        autoPitchController = new PIDController(1, 0, 0.1);
         
-    m_aprilCameraOne = new OdometryUtility(kDriveKinematics, getHeadingRotation2d(), getModulePositions(), getPoseMeters());
   }
 
   public Pose2d getPose() {
-    return m_aprilCameraOne.getPose();
+    return m_odometry.getPoseMeters();
   }
 
   public void drive(
@@ -114,11 +114,11 @@ public class SwerveDrive extends SubsystemBase {
             // Sets an offset if robot path doesn't start facing drive station
               getHeadingRotation2d().minus(Rotation2d.fromDegrees(FieldCentricOffset.getInstance().getOffset())))
         : new ChassisSpeeds(throttle, strafe, rotation);
-
+    chassisSpeeds = correctForDynamics(chassisSpeeds);
     moduleStates = kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
     setSwerveModuleStates(moduleStates, isOpenLoop);
   }
-
+  
   public void setSwerveModuleStates(SwerveModuleState[] states, boolean isOpenLoop) {
     SwerveDriveKinematics.desaturateWheelSpeeds(states, kMaxSpeedMetersPerSecond);
 
@@ -203,7 +203,6 @@ public class SwerveDrive extends SubsystemBase {
     if (moduleStates != null) {
       Logger.getInstance().recordOutput("SwerveModuleStates/Subsystem", moduleStates);
     }
-    m_aprilCameraOne.updateCameraPos(getHeadingRotation2d(), getModulePositions(), getPoseMeters());
     // kDriveKinematics, getHeadingRotation2d(), getModulePositions(),
     // getPoseMeters()
   }
@@ -239,8 +238,29 @@ public class SwerveDrive extends SubsystemBase {
 
   public void resetOdometry(Pose2d initialPose) {
     // resets the position of swerveEstimatorPoses
-    m_aprilCameraOne.resetPosition(getYaw(), getModulePositions(), initialPose);
     m_odometry.resetPosition(getYaw(), getModulePositions(), initialPose);
+  }
+
+   /**
+   * Correction for swerve second order dynamics issue. Borrowed from 254:
+   * https://github.com/Team254/FRC-2022-Public/blob/main/src/main/java/com/team254/frc2022/subsystems/Drive.java#L325
+   * Discussion:
+   * https://www.chiefdelphi.com/t/whitepaper-swerve-drive-skew-and-second-order-kinematics/416964
+   */
+  private static ChassisSpeeds correctForDynamics(ChassisSpeeds originalSpeeds) {
+    final double LOOP_TIME_S = 0.01;
+    Pose2d futureRobotPose =
+        new Pose2d(
+            originalSpeeds.vxMetersPerSecond * LOOP_TIME_S,
+            originalSpeeds.vyMetersPerSecond * LOOP_TIME_S,
+            Rotation2d.fromRadians(originalSpeeds.omegaRadiansPerSecond * LOOP_TIME_S));
+    Twist2d twistForPose = GeometryUtils.log(futureRobotPose);
+    ChassisSpeeds updatedSpeeds =
+        new ChassisSpeeds(
+            twistForPose.dx / LOOP_TIME_S,
+            twistForPose.dy / LOOP_TIME_S,
+            twistForPose.dtheta / LOOP_TIME_S);
+    return updatedSpeeds;
   }
 
   private Rotation2d getYaw() {
@@ -265,6 +285,21 @@ public class SwerveDrive extends SubsystemBase {
   public void resetAngleToAbsolute() {
     for (SwerveModule mod : mSwerveMods) {
       mod.resetAngleToAbsolute();
+    }
+  }
+
+  /**
+   * sets the desired position of the wheels to a X position
+   */
+  public void lockPose(boolean isOpenLoop) {
+    SmartDashboard.putBoolean("SwerveDrive", true);
+    for (int i = 0; i < mSwerveMods.length; i++) {
+      SwerveModule module = mSwerveMods[i];
+      Translation2d modulePosition = kModuleTranslations[i];
+      SwerveModuleState desiredState = 
+        new SwerveModuleState(0, modulePosition.getAngle());
+        SmartDashboard.putNumber("SwerveDrive/mod"+i+"/angle", modulePosition.getAngle().getDegrees());
+      module.setDesiredState(desiredState, isOpenLoop);
     }
   }
 }

@@ -1,6 +1,8 @@
 package frc.robot.commands;
 
 import frc.robot.subsystems.SwerveDrive;
+import frc.robot.utilities.RotatePositions;
+
 import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.CommandBase;
@@ -13,13 +15,15 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
  */
 public class TeleopSwerve extends CommandBase {
 
-    public final static double TURBO_SPEED = 1.0;
-    public final static double NORMAL_SPEED = 0.5;
+    public final static double SLOW_SPEED = 0.4;
+    public final static double NORMAL_SPEED = 1.0;
     private final double STICK_DEAD_BAND = 0.1;
+
 
     public double m_percentSpeed;
 
     private SwerveDrive m_Swerve;
+    private RotatePositions m_rotatePositions;
     private CommandXboxController m_controller;
     private int m_translationAxis;
     private int m_strafeAxis;
@@ -42,9 +46,11 @@ public class TeleopSwerve extends CommandBase {
      * @param percentSpeed    The speed of the robot from 0.0 to 1.0
      */
     public TeleopSwerve(SwerveDrive Swerve, CommandXboxController controller, int translationAxis, int strafeAxis,
-            int rotationAxis, boolean fieldRelative, boolean openLoop, double percentSpeed) {
+            int rotationAxis, boolean fieldRelative, boolean openLoop) {
         m_Swerve = Swerve;
         addRequirements(m_Swerve);
+
+        m_percentSpeed = NORMAL_SPEED;
 
         m_controller = controller;
         m_translationAxis = translationAxis;
@@ -53,16 +59,22 @@ public class TeleopSwerve extends CommandBase {
         m_fieldRelative = fieldRelative;
         m_openLoop = openLoop;
 
-        m_percentSpeed = percentSpeed;
-        Logger.getInstance().recordOutput("TeleopSwerve/percentSpeed", m_percentSpeed);
-    }
+        m_rotatePositions = new RotatePositions();
+        }
 
     @Override
     public void execute() {
+        double rAxis;
         // Gets the inputs from the joysticks
         double yAxis = -m_controller.getHID().getRawAxis(m_translationAxis);
         double xAxis = -m_controller.getHID().getRawAxis(m_strafeAxis);
-        double rAxis = -m_controller.getHID().getRawAxis(m_rotationAxis);
+        // TODO REVIEW BEFORE ENABLING SINCE Y() was used by drive to release cone/cube
+        // if (m_controller.getHID().getYButton()) {
+        //     rAxis = m_rotationMathUtility.rotationSpeed(m_Swerve.getPose(), m_rotatePositions.getPose2dForRotation(), m_Swerve.getHeadingDegrees());
+        // }
+        // else{
+            rAxis = -m_controller.getHID().getRawAxis(m_rotationAxis);
+        // }
 
         // Applies a deadband to the values
         yAxis = MathUtil.applyDeadband(yAxis, STICK_DEAD_BAND);
@@ -75,5 +87,24 @@ public class TeleopSwerve extends CommandBase {
         double m_rotation = rAxis * m_percentSpeed;
 
         m_Swerve.drive(m_throttle, m_strafe, m_rotation, m_fieldRelative, m_openLoop);
+    }
+
+    public void toggleSpeed() {
+        if (m_percentSpeed == SLOW_SPEED) {
+            m_percentSpeed = NORMAL_SPEED;
+        } else {
+            m_percentSpeed = SLOW_SPEED;
+        }
+        Logger.getInstance().recordOutput("TeleopSwerve/percentSpeed", m_percentSpeed);
+    }
+
+    public void forceSlowSpeed() {
+        m_percentSpeed = SLOW_SPEED;
+        Logger.getInstance().recordOutput("TeleopSwerve/percentSpeed", m_percentSpeed);
+    }
+
+    public void forceNormalSpeed() {
+        m_percentSpeed = NORMAL_SPEED;
+        Logger.getInstance().recordOutput("TeleopSwerve/percentSpeed", m_percentSpeed);
     }
 }

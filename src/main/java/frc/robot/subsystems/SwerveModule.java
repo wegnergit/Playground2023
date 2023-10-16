@@ -4,8 +4,6 @@
 
 package frc.robot.subsystems;
 
-import edu.wpi.first.math.geometry.Pose2d;
-
 import com.ctre.phoenix.sensors.CANCoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
@@ -39,6 +37,7 @@ public class SwerveModule extends SubsystemBase {
   public static final double kMaxModuleAngularSpeedRadiansPerSecond = 180; // 2 * Math.PI; last year 930 used 180
   public static final double kMaxModuleAngularAccelerationRadiansPerSecondSquared = 180; // 2 * Math.PI; last year 930
                                                                                          // used 180
+  
   // Verified Values
   // https://www.swervedrivespecialties.com/collections/kits/products/mk4i-swerve-module?variant=39598777303153
   public static final double kDriveMotorGearRatio = 6.75; // MK4i L2 Neo
@@ -77,7 +76,7 @@ public class SwerveModule extends SubsystemBase {
   /**
    * Constructs a SwerveModule.
    *
-   * @param swerveModuleConstants      Swerve modules constants to setup swerve module
+   * @param swerveModuleConstants     Swerve modules constants to setup swerve module
    */
   public SwerveModule(SwerveModuleConstants swerveModuleConstants) {
     m_driveMotor = new CANSparkMax(swerveModuleConstants.driveMotorChannel, CANSparkMaxLowLevel.MotorType.kBrushless);
@@ -219,10 +218,10 @@ public class SwerveModule extends SubsystemBase {
     }
   }
 
-  // gets the swerve module number
-  private int getModuleNumber() {
-    return m_moduleNumber;
-  }
+  // // gets the swerve module number
+  // private int getModuleNumber() {
+  //   return m_moduleNumber;
+  // }
 
   private void simUpdateDrivePosition(SwerveModuleState state) {
     m_simDriveEncoderVelocity = state.speedMetersPerSecond;
@@ -231,21 +230,21 @@ public class SwerveModule extends SubsystemBase {
     m_simDriveEncoderPosition += distancePer20Ms;
   }
 
-  private void simTurnPosition(double angle) {
-    if (angle != m_currentAngle && m_simTurnAngleIncrement == 0) {
-      m_simAngleDifference = angle - m_currentAngle;
-      m_simTurnAngleIncrement = m_simAngleDifference / 20.0;// 10*20ms = .2 sec move time
-    }
+  // private void simTurnPosition(double angle) {
+  //   if (angle != m_currentAngle && m_simTurnAngleIncrement == 0) {
+  //     m_simAngleDifference = angle - m_currentAngle;
+  //     m_simTurnAngleIncrement = m_simAngleDifference / 20.0;// 10*20ms = .2 sec move time
+  //   }
 
-    if (m_simTurnAngleIncrement != 0) {
-      m_currentAngle += m_simTurnAngleIncrement;
+  //   if (m_simTurnAngleIncrement != 0) {
+  //     m_currentAngle += m_simTurnAngleIncrement;
 
-      if ((Math.abs(angle - m_currentAngle)) < .1) {
-        m_currentAngle = angle;
-        m_simTurnAngleIncrement = 0;
-      }
-    }
-  }
+  //     if ((Math.abs(angle - m_currentAngle)) < .1) {
+  //       m_currentAngle = angle;
+  //       m_simTurnAngleIncrement = 0;
+  //     }
+  //   }
+  // }
 
   public SwerveDriveKinematics getSwerveKinematics() {
     return SwerveDrive.kDriveKinematics;

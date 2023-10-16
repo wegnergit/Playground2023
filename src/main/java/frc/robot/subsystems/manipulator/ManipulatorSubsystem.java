@@ -1,49 +1,39 @@
 package frc.robot.subsystems.manipulator;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
 
 public class ManipulatorSubsystem extends SubsystemBase {
-    
-    private final ProfiledPIDController controller;
-    private final ArmFeedforward ff;
-    private double targetPosition;
-    private final ManipulatorIO m_io;
-    public static double HIGH_POSITION = 27.6; //at high elevator position
-    public static double MEDIUM_POSITION = 23.9; //at medium elevator position
-    public static double GROUND_POSITION = 5.2; //at ground elevator position
-    public static double STOW_POSITION = 45.0; //at ground elevator position
-    public static double INTAKE_POSITION = -225.0; //TODO: Find actual intake position value
+        private final ManipulatorIO m_io;
 
-    public static final double ROLLER_INTAKE_SPEED = 0.8;
-    public static final double RELEASE_SPEED = -0.3;
+    public static final double ROLLER_INTAKE_SPEED = 0.2; 
+    public static final double HOLD_SPEED = 0.1; 
+
+    public static final double LOW_SCORE_SPEED = -0.1; 
+    public static final double MEDIUM_SCORE_SPEED = -0.3;
+    public static final double HIGH_SCORE_SPEED = -1.0; 
+
+    public static final double MAX_SPEED = -1.0;
 
     /**<h3>ManipulatorSubsystem</h3>
      * Decides desired output, in volts, for the manipulator.
      * @param io The ArmIO, use IORobot if robot is real, otherwise use IOSim.
      */
     public ManipulatorSubsystem (ManipulatorIO io) {
-
-        // Sets up PID controller TODO: Change these values
-        //controller = new ProfiledPIDController(0.35, 0, 0, new Constraints(50, 50));
-        controller = new ProfiledPIDController(0.2, 0, 0, new Constraints(360, 720));
-        controller.setTolerance(1, 1);
-
-        // Sets up Feetforward TODO: Change these values
-        ff = new ArmFeedforward(0.0, 0.7, 0);
-
         m_io = io;
-
-        targetPosition = STOW_POSITION;
     }
 
     /**<h3>periodic</h3>
@@ -56,48 +46,7 @@ public class ManipulatorSubsystem extends SubsystemBase {
         if (DriverStation.isEnabled() || !Robot.isReal()){
             
             this.m_io.updateInputs();
-
-            double currentDegrees = m_io.getCurrentAngleDegrees();
-
-            // Set up PID controller
-            double effort = controller.calculate(currentDegrees, targetPosition);
-            controller.setTolerance(1, 1);
-            controller.enableContinuousInput(0, 360);
-            
-            //Set up Feed Forward
-            double feedforward = ff.calculate(Units.degreesToRadians(currentDegrees), Units.degreesToRadians(m_io.getVelocityDegreesPerSecond()));
-
-
-            effort += feedforward;
-            effort = MathUtil.clamp(effort, -8, 8);
-
-            m_io.setVoltage(effort);
-            
-            SmartDashboard.putNumber("MANIPULATOR EFFORT", effort);
-
-            SmartDashboard.putNumber("MANIPULATOR FEED FORWARD", feedforward);
-        } else {
-            controller.reset(m_io.getCurrentAngleDegrees());
         }
-
-        SmartDashboard.putNumber("MANIPULATOR TARGET POSITION", targetPosition);
-        SmartDashboard.putNumber("Manipulator Encoder Value", getPosition());
-    }
-
-    /**<h3>setPosition</h3>
-     * Moves the manipulator to the desired position, using voltage.
-     * @param target Desired manipulator position in degrees
-     */
-    public void setPosition(double target) {
-        targetPosition = target;
-    }
-    
-    /**<h3>getPosition</h3>
-     * Gets the manipulator motor position in degrees
-     * @return getCurrentAngleDegrees
-     */
-    public double getPosition(){
-        return m_io.getCurrentAngleDegrees();
     }
 
     /**<h3>getRollerVoltage</h3>
@@ -108,15 +57,25 @@ public class ManipulatorSubsystem extends SubsystemBase {
         return m_io.getRollerVoltage();
     }
 
+    public double getRollerCurrent(){
+        return m_io.getRollerCurrent();
+    }
+
     /**<h3>getRollerSpeed</h3>
      * Sets the roller speed
      * @return setRollerSpeed
      */
     public void setRollerSpeed(double speed) {
         m_io.setRollerSpeed(speed);
+        Logger.getInstance().recordOutput(this.getClass().getSimpleName() + "/ManipulatorSpeed", speed);
     }
 
-    public Command setWristPositionCommand(double degrees) {
-        return new InstantCommand(() -> setPosition(degrees), this);
+    public Command waitUntilCurrentPast(double amps) { 
+        Debouncer debouncer = new Debouncer(.1); //Creates a debouncer to confirm amps are greater than value for .1 seconds
+        return Commands.waitUntil(() -> debouncer.calculate(this.getRollerCurrent() > amps));
+    }
+
+    public void refollowMotors() {
+        m_io.refollow();
     }
 }

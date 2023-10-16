@@ -2,13 +2,10 @@ package frc.robot.commands.armcommands;
 
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.arm.ArmSubsystem;
-import frc.robot.subsystems.manipulator.ManipulatorSubsystem;
 
 public class SetArmDegreesCommand extends CommandBase{
 
     private ArmSubsystem m_arm;
-    private ManipulatorSubsystem m_manipulator;
-    private double m_manipulatorPos;
     private double m_armPos;
 
     /**
@@ -20,17 +17,18 @@ public class SetArmDegreesCommand extends CommandBase{
      * @param armPosition The desired arm position in degrees
      * @param manipulatorPosition The desired manipulator position in degrees
      */
-    public SetArmDegreesCommand(ArmSubsystem armSubsystem, ManipulatorSubsystem manipulatorSubsystem, double armPosition, double manipulatorPosition) {
+    public SetArmDegreesCommand(ArmSubsystem armSubsystem, double armPosition) {
         m_arm = armSubsystem;
-        m_manipulator = manipulatorSubsystem;
-        m_manipulatorPos = manipulatorPosition;
         m_armPos = armPosition;
+        addRequirements(armSubsystem);
     }
 
+
     @Override
-    public void execute() {
-        m_manipulator.setPosition(m_manipulatorPos);
-        m_arm.setPosition(m_armPos);
+    public void initialize() {
+        if(m_arm != null) {
+            m_arm.setPosition(m_armPos);
+        }
     }
 
     @Override

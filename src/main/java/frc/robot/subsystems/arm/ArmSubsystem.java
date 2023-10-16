@@ -8,27 +8,21 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
+import frc.robot.utilities.CommandFactoryUtility;
 
 public class ArmSubsystem extends SubsystemBase {
 
+    public static double STOW_POSITION = CommandFactoryUtility.STOW_POSITION;
+    
     private final ProfiledPIDController controller;
     private final ArmFeedforward ff;
-
-    private double targetPosition;
-
     private final ArmIO m_armIO;
 
-    //TODO use offsets for positions
-    public static double HIGH_POSITION = 10; //at high elevator position
-    public static double MEDIUM_POSITION = 17.9; //at medium elevator position
-    public static double GROUND_POSITION = 46.8; //at ground elevator position
-    public static double STOW_POSITION = 70.0;//-60.0; //at ground elevator position
-    public static double INTAKE_POSITION = 50.0; // TODO: Find an actual intake value
-
-    public static double ARM_LENGTH = 27.12;
+    private double targetPosition;
 
     /**
      * <h3>ArmSubsystem</h3>
@@ -40,12 +34,14 @@ public class ArmSubsystem extends SubsystemBase {
     public ArmSubsystem (ArmIO armIO) {
 
         // Sets up PID controller
-        controller = new ProfiledPIDController(0.2, 0, 0.02, new Constraints(225, 360));
+        // controller = new ProfiledPIDController(0.2, 0, 0.02, new Constraints(225, 270));
+        controller = new ProfiledPIDController(0.25, 0, 0.025, new Constraints(225, 200));
+
         controller.setTolerance(1, 1);
         controller.enableContinuousInput(0, 360);
 
         // TODO Change values when manipulator is added
-        ff = new ArmFeedforward(0, 0.85, 0);
+        ff = new ArmFeedforward(0, 0.65, 0);
         
         m_armIO = armIO;
 
@@ -70,16 +66,16 @@ public class ArmSubsystem extends SubsystemBase {
 
             m_armIO.setVoltage(effort);
 
-            SmartDashboard.putNumber("ARM FEED FORWARD", feedforward);
-            SmartDashboard.putNumber("ARM EFFORT", effort);
-            SmartDashboard.putNumber("ARM ERROR", controller.getPositionError());
+            SmartDashboard.putNumber(this.getClass().getSimpleName()+"/FeedForward", feedforward);
+            SmartDashboard.putNumber(this.getClass().getSimpleName()+"/Effort", effort);
+            SmartDashboard.putNumber(this.getClass().getSimpleName()+"/Error", controller.getPositionError());
         }
         else{
             controller.reset(m_armIO.getCurrentAngleDegrees());
         }
         
-        SmartDashboard.putNumber("ARM TARGET POSITION", targetPosition);
-        SmartDashboard.putNumber("Arm Encoder Value", getPosition());
+        SmartDashboard.putNumber(this.getClass().getSimpleName()+"/TargetPosition", targetPosition);
+        SmartDashboard.putNumber(this.getClass().getSimpleName()+"/EncoderValue", getPosition());
     }
 
     /**
@@ -106,4 +102,27 @@ public class ArmSubsystem extends SubsystemBase {
         return new InstantCommand(() -> setPosition(degrees), this);
     }
 
+    private boolean atSetPoint() {
+        return this.controller.atGoal();
+    }
+
+    private boolean lessThan(double angle) {
+        return this.getPosition() < angle;
+    }
+
+    private boolean greaterThan(double angle) {
+        return this.getPosition() > angle;
+    }
+
+    public Command createWaitUntilAtAngleCommand() {
+        return Commands.waitUntil(() -> this.atSetPoint());
+    }
+
+    public Command createWaitUntilLessThanAngleCommand(double angle) {
+        return Commands.waitUntil(() -> this.lessThan(angle));
+    }
+
+    public Command createWaitUntilGreaterThanAngleCommand(double angle) {
+        return Commands.waitUntil(() -> this.greaterThan(angle));
+    }
 }
