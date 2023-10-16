@@ -1,9 +1,9 @@
 package frc.robot.commands.armcommands;
 
-import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.TopRollerSubsystem;
 
-public class RunTopRollerCommand extends CommandBase{
+public class RunTopRollerCommand extends Command{
     
     private final double m_rollerSpeed;
     private final boolean m_pistonOpen;

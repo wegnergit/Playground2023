@@ -3,7 +3,7 @@ package frc.robot.commands;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.SwerveDrive;
 
 /**
@@ -12,7 +12,7 @@ import frc.robot.subsystems.SwerveDrive;
  * Balances the robot on the Charging Station
  * 
  */
-public class AutoBalanceCommand extends CommandBase {
+public class AutoBalanceCommand extends Command {
     
     private static final double INVERTED_DEADBAND = 8.0;
     private static final double NON_INVERTED_DEADBAND = 8.0;

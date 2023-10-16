@@ -24,7 +24,7 @@ import java.util.function.Supplier;
  * 
  * Custom PathPlanner version of SwerveControllerCommand to log desired pose and expose trajectory and pose
  */
-public class PPSwerveControllerCommand extends CommandBase {
+public class PPSwerveControllerCommand extends Command {
   private final Timer timer = new Timer();
   protected  PathPlannerTrajectory trajectory;  // Need protected for can be call from extended object.
   protected final Supplier<Pose2d> poseSupplier; // Need protected for can be call from extended object.

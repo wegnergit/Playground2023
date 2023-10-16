@@ -1,9 +1,9 @@
 package frc.robot.commands.armcommands;
 
-import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.arm.ArmSubsystem;
 
-public class SetArmDegreesCommand extends CommandBase{
+public class SetArmDegreesCommand extends Command{
 
     private ArmSubsystem m_arm;
     private double m_armPos;

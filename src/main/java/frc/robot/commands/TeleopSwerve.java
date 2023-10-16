@@ -5,7 +5,7 @@ import frc.robot.utilities.RotatePositions;
 
 import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 /**
@@ -13,7 +13,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
  * 
  * Allows the driver to move the robot manually through controller input
  */
-public class TeleopSwerve extends CommandBase {
+public class TeleopSwerve extends Command {
 
     public final static double SLOW_SPEED = 0.4;
     public final static double NORMAL_SPEED = 1.0;

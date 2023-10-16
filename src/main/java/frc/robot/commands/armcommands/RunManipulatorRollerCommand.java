@@ -1,9 +1,9 @@
 package frc.robot.commands.armcommands;
 
-import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.manipulator.ManipulatorSubsystem;
 
-public class RunManipulatorRollerCommand extends CommandBase{
+public class RunManipulatorRollerCommand extends Command{
 
     private double m_rollerSpeed;
 

@@ -8,7 +8,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.commands.PPSwerveControllerCommand; // our version of PPSwerveControllerCommand
 
@@ -212,7 +212,7 @@ public class SwerveAutoBuilder extends BaseAutoBuilder {
 
   //Makes the robot follow the path
   @Override
-  public CommandBase followPath(PathPlannerTrajectory trajectory) {
+  public Command followPath(PathPlannerTrajectory trajectory) {
     if (useKinematics) {
       return new PPSwerveControllerCommand(
           trajectory,

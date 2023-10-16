@@ -1,6 +1,6 @@
 package frc.robot.commands;
 
-import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.SwerveDrive;
 
 /**
@@ -9,7 +9,7 @@ import frc.robot.subsystems.SwerveDrive;
  * Locks the wheels in a X formation
  *
  */
-public class SwerveLockCommand extends CommandBase{
+public class SwerveLockCommand extends Command{
     
     private SwerveDrive m_SwerveDrive;
     private boolean m_isOpenLoop;
