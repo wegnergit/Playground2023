@@ -2,16 +2,21 @@ package frc.robot.autos;
 
 import frc.robot.subsystems.SwerveDrive;
 import frc.robot.utilities.FieldCentricOffset;
-import frc.robot.utilities.SwerveAutoBuilder;
+// import frc.robot.utilities.SwerveAutoBuilder;
 
 import java.util.List;
 import java.util.Map;
 
-import com.pathplanner.lib.PathConstraints;
-import com.pathplanner.lib.PathPlanner;
-import com.pathplanner.lib.PathPlannerTrajectory;
-import com.pathplanner.lib.auto.PIDConstants;
+import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.auto.AutoBuilder;
+// import com.pathplanner.lib.PathPlanner;
+import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.pathplanner.lib.path.PathPlannerTrajectory;
+import com.pathplanner.lib.util.PIDConstants;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -39,43 +44,66 @@ public class PathPlannerCommand extends SequentialCommandGroup {
     public PathPlannerCommand(Command preCommand, SwerveDrive s_Swerve, String pathName, Map<String, Command> eventCommandMap, Command postCommand) {
         addRequirements(s_Swerve);
 
-        PathConstraints pathConstraints = PathPlanner.getConstraintsFromPath(pathName);
-        if(pathConstraints == null) {
-            pathConstraints = new PathConstraints(MAX_VELOCITY, MAX_ACCELERATION);
-        }
-
-        // Load Path Group trajectory to follow. All units in meters.
-        List<PathPlannerTrajectory> loadPathGroup = PathPlanner.loadPathGroup(pathName, 
-             false, pathConstraints);
-
-        SwerveAutoBuilder autoBuilder = 
-            new SwerveAutoBuilder(
-                s_Swerve::getPose, //Using Pose Swerve estimator
-                s_Swerve::resetOdometry, //pose2D consumer, used to reset odometry at beginning of zero
-                SwerveDrive.getSwerveKinematics(),
-                new PIDConstants(1.75, 0.0, 0.175), //PID constants to correct for translation error (X and Y)
-                //new PIDConstants(1.0, 0.0, 0.0), //PID constants to correct for rotation error (used to create the rotation controller)
-                new PIDConstants(1.9, 0.0, 0.19), //PID constants to correct for rotation error (used to create the rotation controller)
-                s_Swerve::setSwerveModuleStates,
-                eventCommandMap, 
-                true, // TODO Should the path be automatically mirrored depending on alliance color
-                s_Swerve);
-
         // Adding a pre command to autonomous ex. autoBalance
         if(preCommand != null) {
             addCommands(preCommand);
         }
 
+        // TODO May not need given autoconfigure has a resetPose???
+        //https://github.com/mjansen4857/pathplanner/wiki/Java-Example:-Path-Groups
+        Pose2d startingPose = getStartingPose(pathName);
+        
+        
         // creates a command based on the path group
-        Command swerveControllerCommand = autoBuilder.fullAuto(loadPathGroup);
+        Command swerveControllerCommand = getAutoCommand(pathName);
+
         addCommands(
             // TODO: Use april tags to help set this
-            new InstantCommand(() -> FieldCentricOffset.getInstance().setOffset(loadPathGroup.get(0).getInitialHolonomicPose().getRotation().getDegrees())),
+            new InstantCommand(() -> FieldCentricOffset.getInstance().setOffset(startingPose.getRotation().getDegrees())),
             swerveControllerCommand
         );
         if (postCommand != null) {
             addCommands(postCommand);
         }
+    }
+
+    private Command getAutoBuilderFollowCommand(String pathName) {
+        // //https://github.com/mjansen4857/pathplanner/wiki/Java-Example:-Follow-a-Single-Path
+        // // Load the path you want to follow using its name in the GUI
+        PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
+        // // Create a path following command using AutoBuilder. This will also trigger event markers.
+        return AutoBuilder.followPathWithEvents(path);
+    }
+
+    private PathPlannerAuto getPathPlannerAutoCommand(String pathName) {
+        // creates a command based on the auto (NO EVENTS though)
+        //https://github.com/mjansen4857/pathplanner/wiki/Java-Example:-Path-Groups
+        return new PathPlannerAuto(pathName);
+    }
+    
+    private Command getAutoCommand(String pathName) {
+        // None seem to execute EventMarkers
+        if (false) {
+            // no starting point
+            return getAutoBuilderFollowCommand(pathName);
+        } else {
+            // has starting point
+            return getPathPlannerAutoCommand(pathName);
+        }
+    }
+
+    private Pose2d getStartingPose(String pathName) {
+        double degrees;
+        Pose2d startingPose;
+        try {
+            //https://github.com/mjansen4857/pathplanner/wiki/Java-Example:-Path-Groups
+            startingPose = PathPlannerAuto.getStaringPoseFromAutoFile(pathName);
+            degrees = startingPose.getRotation().getDegrees();
+        } catch ( RuntimeException ex) {
+            startingPose = new Pose2d(0.0,0.0,new Rotation2d(0.0, 0.0));
+            degrees = 0.0;
+        }
+        return startingPose;
     }
 
     /**

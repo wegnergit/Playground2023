@@ -7,7 +7,7 @@ import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 public class ArmIOSim implements ArmIO {
     private final SingleJointedArmSim sim = new SingleJointedArmSim(DCMotor.getNEO(1), 75,
     SingleJointedArmSim.estimateMOI(Units.inchesToMeters(24.719), Units.lbsToKilograms(11)),
-    Units.inchesToMeters(24.719), -2 * Math.PI, 2 * Math.PI, true);
+    Units.inchesToMeters(24.719), -2 * Math.PI, 2 * Math.PI, true, 0);
 
 
     /**

@@ -2,6 +2,9 @@ package frc.robot.autos;
 
 import java.util.*;
 
+import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.util.PathPlannerLogging;
+
 // import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Pose2d;
@@ -15,11 +18,10 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.commands.AutoBalanceCommand;
-import frc.robot.commands.PPSwerveControllerCommand;
+// import frc.robot.commands.PPSwerveControllerCommand;
 import frc.robot.subsystems.*;
 import frc.robot.subsystems.arm.ArmSubsystem;
 import frc.robot.subsystems.manipulator.ManipulatorSubsystem;
-import frc.robot.subsystems.TopRollerSubsystem;
 import frc.robot.utilities.CommandFactoryUtility;
 
 /**
@@ -92,21 +94,16 @@ public class AutoCommandManager {
      */
     public void initCommands(Map<String, Command> eventCommandMap) {
         // Setup Logging for PathPlanner (for Ghost image)
-        // NOTE: Make sure same as setting correct PPSwerveControllerCommand (ours or theirs)
-        PPSwerveControllerCommand.setLoggingCallbacks(
-                null, 
-
-                (Pose2d targetPose) -> {
+        // https://github.com/mjansen4857/pathplanner/wiki/Java-Example:-Custom-Logging
+        PathPlannerLogging.setLogTargetPoseCallback((Pose2d targetPose) -> {
                     // Log target pose
                     pp_field2d.setRobotPose(targetPose);
                     // May just want dashboard not on field2d
                     // Logger..getInstance().recordOutput("PathPlanner/DesiredPose",targetPose);
-                },
-                null, // logSetPoint
+                });
+        // TODO REMOVE eventCommandMap from PathPlannerCommand since 2024 uses NamedCommands.registerCommands
+        NamedCommands.registerCommands(eventCommandMap);
 
-                null // loggError
-
-        );
         SmartDashboard.putData("PP_Field", pp_field2d);
         //Subsystems used by auto commands
         SwerveDrive s_SwerveDrive = (SwerveDrive) subsystemMap.get(subNames.SwerveDriveSubsystem.toString());
@@ -139,7 +136,7 @@ public class AutoCommandManager {
 
 
         // Adding options to the chooser in Shuffleboard/smartdashboard
-        Boolean isBlue = (DriverStation.getAlliance() == Alliance.Blue);
+        // Boolean isBlue = (DriverStation.getAlliance() == Alliance.Blue);
         m_chooser.setDefaultOption("None", null);
 
         m_chooser.addOption("HighScoreBumpMobility_u", HighScoreBumpMobilityCommand);

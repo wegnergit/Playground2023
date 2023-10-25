@@ -246,6 +246,7 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     checkDSUpdate();
+    
     // If not FMS controlled add to teleop init too (for practice match and Red/Blue alliance need to be correctly set)
     return m_autoManager.getAutonomousCommand();
     //TODO determine if autoManager needs to have andThen(() -> m_robotDrive.drive(0, 0, 0, false,false));

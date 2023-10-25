@@ -6,6 +6,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.robot.subsystems.SwerveDrive;
@@ -93,5 +94,6 @@ public class MechanismSimulator {
 
         // Sends system simulations to logger
         // Logger.getInstance().recordOutput(this.getClass().getSimpleName()+"/Mech2d", mech);
+        SmartDashboard.putData("Mech2d", mech);
     }
 }

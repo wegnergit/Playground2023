@@ -11,7 +11,7 @@ public class ManipulatorIOSim implements ManipulatorIO {
 
     private final SingleJointedArmSim sim = new SingleJointedArmSim(DCMotor.getNEO(1), 75,
             SingleJointedArmSim.estimateMOI(Units.inchesToMeters(9.4), Units.lbsToKilograms(4)),
-            Units.inchesToMeters(9.4), -2 * Math.PI, 2 * Math.PI, true);
+            Units.inchesToMeters(9.4), -2 * Math.PI, 2 * Math.PI, true, 0);
     private final SparkMaxWrapper roller = new SparkMaxWrapper(15, MotorType.kBrushless);
 
     @Override
