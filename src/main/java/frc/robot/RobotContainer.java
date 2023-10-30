@@ -7,6 +7,7 @@ package frc.robot;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -16,6 +17,12 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.TunerConstants;
 
 public class RobotContainer {
+  /**
+   *
+   */
+  private static final double DEADBAND = 0.1;
+  private static final double percentSpeed = 0.2;
+  private static final double percentRotatationSpeed = 0.5;
   final double MaxSpeed = 6; // 6 meters per second desired top speed
   final double MaxAngularRate = Math.PI; // Half a rotation per second max angular velocity
 
@@ -27,23 +34,31 @@ public class RobotContainer {
   SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
   SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
   Telemetry logger = new Telemetry(MaxSpeed);
+  // SJW From SwerveWithPlanner
+  SwerveRequest.RobotCentric forwardStraight = new SwerveRequest.RobotCentric().withIsOpenLoop(true);
 
   private void configureBindings() {
     drivetrain.setDefaultCommand( // Drivetrain will execute this command periodically
-        drivetrain.applyRequest(() -> drive.withVelocityX(-joystick.getLeftY() * MaxSpeed) // Drive forward with
+        drivetrain.applyRequest(() -> drive.withVelocityX(-MathUtil.applyDeadband(joystick.getLeftY(),DEADBAND) * MaxSpeed * percentSpeed) // Drive forward with
                                                                                            // negative Y (forward)
-            .withVelocityY(-joystick.getLeftX() * MaxSpeed) // Drive left with negative X (left)
-            .withRotationalRate(-joystick.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
+            .withVelocityY(-MathUtil.applyDeadband(joystick.getLeftX(),DEADBAND) * MaxSpeed * percentSpeed) // Drive left with negative X (left)
+            .withRotationalRate(-MathUtil.applyDeadband(joystick.getRightX(),DEADBAND) * MaxAngularRate * percentRotatationSpeed) // Drive counterclockwise with negative X (left)
         ));
 
     joystick.a().whileTrue(drivetrain.applyRequest(() -> brake));
     joystick.b().whileTrue(drivetrain
-        .applyRequest(() -> point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))));
+        .applyRequest(() -> point.withModuleDirection(new Rotation2d(-MathUtil.applyDeadband(joystick.getLeftY(),DEADBAND), -MathUtil.applyDeadband(joystick.getLeftX(),DEADBAND)))));
 
     if (Utils.isSimulation()) {
       drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
     }
     drivetrain.registerTelemetry(logger::telemeterize);
+
+    
+    // SJW FROM SwerveWithPlanner (nice feature to drive foward or backwardof robot)
+    joystick.pov(0).whileTrue(drivetrain.applyRequest(()->forwardStraight.withVelocityX(0.5).withVelocityY(0)));
+    joystick.pov(180).whileTrue(drivetrain.applyRequest(()->forwardStraight.withVelocityX(-0.5).withVelocityY(0)));
+
   }
 
   public RobotContainer() {
