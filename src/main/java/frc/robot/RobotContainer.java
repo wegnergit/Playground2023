@@ -6,6 +6,7 @@ package frc.robot;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -59,10 +60,10 @@ public class RobotContainer {
 
     
     // SJW FROM SwerveWithPlanner POV control not field centric (nice feature to drive foward or backwardof robot)
-    joystick.pov(0).whileTrue(drivetrain.applyRequest(()->forwardStraight.withVelocityX(0.5*MaxSpeed).withVelocityY(0)));
-    joystick.pov(180).whileTrue(drivetrain.applyRequest(()->forwardStraight.withVelocityX(-0.5*MaxSpeed).withVelocityY(0)));
-    joystick.pov(270).whileTrue(drivetrain.applyRequest(()->forwardStraight.withVelocityY(0.5*MaxSpeed).withVelocityX(0)));
-    joystick.pov(90).whileTrue(drivetrain.applyRequest(()->forwardStraight.withVelocityY(-0.5*MaxSpeed).withVelocityX(0)));
+    joystick.pov(0).whileTrue(drivetrain.applyRequest(()->forwardStraight.withVelocityX(0.5*MaxSpeed*percentSpeed).withVelocityY(0)));
+    joystick.pov(180).whileTrue(drivetrain.applyRequest(()->forwardStraight.withVelocityX(-0.5*MaxSpeed*percentSpeed).withVelocityY(0)));
+    joystick.pov(270).whileTrue(drivetrain.applyRequest(()->forwardStraight.withVelocityY(0.5*MaxSpeed*percentSpeed).withVelocityX(0)));
+    joystick.pov(90).whileTrue(drivetrain.applyRequest(()->forwardStraight.withVelocityY(-0.5*MaxSpeed*percentSpeed).withVelocityX(0)));
 
   }
 
@@ -71,6 +72,7 @@ public class RobotContainer {
   }
 
   public Command getAutonomousCommand() {
-    return Commands.print("No autonomous command configured");
+    String pathName = "Auto";
+    return new PathPlannerAuto(pathName);
   }
 }
