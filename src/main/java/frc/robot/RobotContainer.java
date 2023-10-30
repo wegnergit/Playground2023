@@ -7,7 +7,6 @@ package frc.robot;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -39,25 +38,31 @@ public class RobotContainer {
 
   private void configureBindings() {
     drivetrain.setDefaultCommand( // Drivetrain will execute this command periodically
-        drivetrain.applyRequest(() -> drive.withVelocityX(-MathUtil.applyDeadband(joystick.getLeftY(),DEADBAND) * MaxSpeed * percentSpeed) // Drive forward with
+        drivetrain.applyRequest(() -> drive.withVelocityX(-joystick.getLeftY() * MaxSpeed * percentSpeed) // Drive forward with
                                                                                            // negative Y (forward)
-            .withVelocityY(-MathUtil.applyDeadband(joystick.getLeftX(),DEADBAND) * MaxSpeed * percentSpeed) // Drive left with negative X (left)
-            .withRotationalRate(-MathUtil.applyDeadband(joystick.getRightX(),DEADBAND) * MaxAngularRate * percentRotatationSpeed) // Drive counterclockwise with negative X (left)
+            .withVelocityY(-joystick.getLeftX() * MaxSpeed * percentSpeed) // Drive left with negative X (left)
+            .withRotationalRate(-joystick.getRightX() * MaxAngularRate * percentRotatationSpeed) // Drive counterclockwise with negative X (left)
+            .withDeadband(DEADBAND)
+            .withRotationalDeadband(DEADBAND)
         ));
 
     joystick.a().whileTrue(drivetrain.applyRequest(() -> brake));
+    // NOTE: No Deadband with PointWheelsAt (may need MathUtil.deadband)
     joystick.b().whileTrue(drivetrain
-        .applyRequest(() -> point.withModuleDirection(new Rotation2d(-MathUtil.applyDeadband(joystick.getLeftY(),DEADBAND), -MathUtil.applyDeadband(joystick.getLeftX(),DEADBAND)))));
+        .applyRequest(() -> point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))));
 
-    if (Utils.isSimulation()) {
-      drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
-    }
+    // SJW Not sure why the start robot rotated 90 degrees 
+    // if (Utils.isSimulation()) {
+    //   drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
+    // }
     drivetrain.registerTelemetry(logger::telemeterize);
 
     
-    // SJW FROM SwerveWithPlanner (nice feature to drive foward or backwardof robot)
-    joystick.pov(0).whileTrue(drivetrain.applyRequest(()->forwardStraight.withVelocityX(0.5).withVelocityY(0)));
-    joystick.pov(180).whileTrue(drivetrain.applyRequest(()->forwardStraight.withVelocityX(-0.5).withVelocityY(0)));
+    // SJW FROM SwerveWithPlanner POV control not field centric (nice feature to drive foward or backwardof robot)
+    joystick.pov(0).whileTrue(drivetrain.applyRequest(()->forwardStraight.withVelocityX(0.5*MaxSpeed).withVelocityY(0)));
+    joystick.pov(180).whileTrue(drivetrain.applyRequest(()->forwardStraight.withVelocityX(-0.5*MaxSpeed).withVelocityY(0)));
+    joystick.pov(270).whileTrue(drivetrain.applyRequest(()->forwardStraight.withVelocityY(0.5*MaxSpeed).withVelocityX(0)));
+    joystick.pov(90).whileTrue(drivetrain.applyRequest(()->forwardStraight.withVelocityY(-0.5*MaxSpeed).withVelocityX(0)));
 
   }
 
