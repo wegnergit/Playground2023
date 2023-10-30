@@ -4,12 +4,18 @@
 
 package frc.robot;
 
+import java.util.Optional;
 
 import com.ctre.phoenix6.SignalLogger;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
@@ -18,7 +24,7 @@ public class Robot extends TimedRobot {
 
   private RobotContainer m_robotContainer;
 
-  private final boolean UseLimelight = false;
+  private final boolean useLimelight = false;
 
   @Override
   public void robotInit() {
@@ -26,20 +32,34 @@ public class Robot extends TimedRobot {
 
     m_robotContainer.drivetrain.getDaqThread().setThreadPriority(99);
 
-    SignalLogger.start();
+    // SJW
+    // TODO Once get a license  (then tuner x can download)
+    // SignalLogger.start();
   }
+
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run(); 
-    if(UseLimelight) {    
-      var lastResult = LimelightHelpers.getLatestResults("limelight").targetingResults;
+    // SJW  Use apriltag to help update odometry
+    Optional<Alliance> allianceOpt = DriverStation.getAlliance();
+    if(allianceOpt.isPresent() && useLimelight) {    
+      Alliance alliance = allianceOpt.get();
+      NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
+      NetworkTableEntry x = table.getEntry("tx");
+      // If dont validate tx exists warning message appear get use LimelightHelpers.getLastestResults
+      if (x.exists()) {
+        var lastResult = LimelightHelpers.getLatestResults("limelight").targetingResults;
+        Pose2d llPose = (alliance == Alliance.Blue)?lastResult.getBotPose2d_wpiBlue():lastResult.getBotPose2d_wpiRed();
 
-      Pose2d llPose = lastResult.getBotPose2d_wpiBlue();
+        if (lastResult.valid) {
+          m_robotContainer.drivetrain.addVisionMeasurement(llPose, Timer.getFPGATimestamp());
+        }
 
-      if (lastResult.valid) {
-        m_robotContainer.drivetrain.addVisionMeasurement(llPose, Timer.getFPGATimestamp());
       }
+
+
     }
+
   }
 
   @Override
@@ -77,8 +97,7 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {}
 
   @Override
-  public void teleopExit() {
-  }
+  public void teleopExit() {}
 
   @Override
   public void testInit() {
