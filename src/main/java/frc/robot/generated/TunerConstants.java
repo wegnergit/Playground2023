@@ -25,9 +25,9 @@ public class TunerConstants {
 
     private static final double kCoupleRatio = 0.0;
     
-    private static final double kDriveGearRatio = 6.538461538;
-    private static final double kSteerGearRatio = 15.42857143;
-    private static final double kWheelRadiusInches = 4;
+    private static final double kDriveGearRatio = 8.16; // SJW 6.538461538;
+    private static final double kSteerGearRatio = 12.8; // SJW 15.42857143;
+    private static final double kWheelRadiusInches = 2; // SJW ENTERED wrong in tuner project 4; 
     private static final int kPigeonId = 13;
     private static final boolean kSteerMotorReversed = false;
     private static final String kCANbusName = "CANBUS";
