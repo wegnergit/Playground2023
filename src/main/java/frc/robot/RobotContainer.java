@@ -235,8 +235,8 @@ public class RobotContainer {
 
 
     // Configure the trigger bindings
-    configureTestBindings();
-    // configureBindings();
+    // configureTestBindings();
+    configureBindings();
     portForwardCameras();
   }
 
