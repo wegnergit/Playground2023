@@ -4,240 +4,329 @@
 
 package frc.robot;
 
-import java.util.HashMap;
-import java.util.Map;
+import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.IndexerCommand;
+import frc.robot.commands.LimeLightIntakeCommand;
+import frc.robot.commands.SetElevatorPositionCommand;
+import frc.robot.commands.RunIntakeCommand;
+import frc.robot.commands.SetPositionsCommand;
+import frc.robot.commands.SetTurretPositionCommand;
+import frc.robot.commands.ShooterCommand;
+import frc.robot.commands.TestIndexerCommand;
+import frc.robot.commands.TestShooterCommand;
+import frc.robot.generated.TunerConstants;
+import frc.robot.sim.MechanismViewer;
+import frc.robot.subsystems.IndexerSubsystem;
+import frc.robot.subsystems.IntakeSubsystem;
+import frc.robot.subsystems.SwerveDrivetrainSubsystem;
+import frc.robot.subsystems.elevator.ElevatorIORobot;
+import frc.robot.subsystems.elevator.ElevatorIOSim;
+import frc.robot.subsystems.elevator.ElevatorSubsystem;
+import frc.robot.subsystems.elevator.ElevatorType;
+import frc.robot.subsystems.pivot.PivotIORobot;
+import frc.robot.subsystems.pivot.PivotIOSim;
+import frc.robot.subsystems.pivot.PivotSubsystem;
+import frc.robot.subsystems.roller.RollerMotorIORobot;
+import frc.robot.subsystems.roller.RollerMotorIOSim;
+import frc.robot.subsystems.timeofflight.TimeOfFlightIORobot;
+import frc.robot.subsystems.timeofflight.TimeOfFlightIOSim;
+import frc.robot.subsystems.turret.TurretIORobot;
+import frc.robot.subsystems.turret.TurretIOSim;
+import frc.robot.subsystems.turret.TurretSubsystem;
+import frc.robot.subsystems.ShooterSubsystem;
+import frc.robot.utilities.GamePieceDetectionUtility;
+import frc.robot.utilities.LimelightHelpers;
+import frc.robot.utilities.LimelightHelpers.Results;
+
 import java.util.Optional;
 
-// import org.littletonrobotics.junction.Logger;
+import java.util.Optional;
 
-import edu.wpi.first.wpilibj.Compressor;
+import com.ctre.phoenix6.mechanisms.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.configs.MotionMagicConfigs;
+import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
+
+import edu.wpi.first.math.controller.ArmFeedforward;
+import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.PneumaticsModuleType;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.JoystickButton;
-import frc.robot.autos.AutoCommandManager;
-import frc.robot.autos.AutoCommandManager.subNames;
-import frc.robot.commands.AutoBalanceCommand;
-import frc.robot.commands.SlapstickCommand;
-import frc.robot.commands.SwerveLockCommand;
-import frc.robot.commands.TeleopSwerve;
-import frc.robot.simulation.FieldSim;
-import frc.robot.simulation.MechanismSimulator;
-import frc.robot.subsystems.SlapstickSubsystem;
-import frc.robot.subsystems.SwerveDrive;
-import frc.robot.subsystems.TopRollerSubsystem;
-import frc.robot.subsystems.arm.ArmIORobot;
-import frc.robot.subsystems.arm.ArmIOSim;
-import frc.robot.subsystems.arm.ArmSubsystem;
-import frc.robot.subsystems.manipulator.ManipulatorIORobot;
-import frc.robot.subsystems.manipulator.ManipulatorSubsystem;
-import frc.robot.utilities.CommandFactoryUtility;
-import frc.robot.utilities.RobotInformation;
-// import frc.robot.utilities.TimeOfFlightUtility;
-import frc.robot.utilities.RobotInformation.WhichRobot;
-import frc.robot.utilities.TargetScorePositionUtility.Target;
-import frc.robot.utilities.SwerveModuleConstants;
-import frc.robot.utilities.TargetScorePositionUtility;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 
-/*
- * This class is where the bulk of the robot should be declared.  Since Command-based is a
+
+/**
+ * This class is where the bulk of the robot should be declared. Since Command-based is a
  * "declarative" paradigm, very little robot logic should actually be handled in the {@link Robot}
- * periodic methods (other than the scheduler calls).  Instead, the structure of the robot
- * (including subsystems, commands, and button mappings) should be declared here.
+ * periodic methods (other than the scheduler calls). Instead, the structure of the robot (including
+ * subsystems, commands, and trigger mappings) should be declared here.
  */
 public class RobotContainer {
 
-  Alliance alliance = null; // NOLONGER exists Alliance.Invalid;
-  boolean allianceAssigned = false;
+    private final boolean UseLimeLightAprilTag = false; 
 
-  /* Drive Controls */
-  private final int translationAxis = XboxController.Axis.kLeftY.value;
-  private final int strafeAxis = XboxController.Axis.kLeftX.value;   
-  private final int rotationAxis = XboxController.Axis.kRightX.value;
+    private static final double   POV_PERCENT_SPEED = 0.3;
+    private static final double JOYSTICK_DEADBAND = 0.1;
+    private static final double JOYSTICK_ROTATIONAL_DEADBAND = 0.1;
+    private static final double PERCENT_SPEED = 0.3;
 
+    private static final String CANBUS = "rio";
 
-    // Which Robot code should we use? competition or not
-    //Cannot use an ID of 0
-    //Changed the turningMotorID and cancoderID from 0 to 3
-    //https://buildmedia.readthedocs.org/media/pdf/phoenix-documentation/latest/phoenix-documentation.pdf
-    //page 100
-    RobotInformation robotInfo = 
-        // Non-Competition robot attributes
-        new RobotInformation(WhichRobot.PRACTICE_ROBOT,
-          new SwerveModuleConstants(8, 9, 9, 113.818), 
-          new SwerveModuleConstants(11, 10, 10, 232.031), 
-          new SwerveModuleConstants(1, 3, 3, 89.033), 
-          new SwerveModuleConstants(18, 19, 19, 6.064)); 
+    //--DIO IDS--\\
+    private static final int TURRET_ENCODER_DIO = 0;
 
-  public static final int kDriverControllerPort = 0;
-  public static final int kCodriverControllerPort = 1;
-  
-  // Creates air pressure for pistons to work
-  private final Compressor compressor = new Compressor(PneumaticsModuleType.REVPH);
-   
- /* Modules */
-  public final SwerveModuleConstants frontLeftModule = robotInfo.getFrontLeft();
-  public final SwerveModuleConstants frontRightModule =  robotInfo.getFrontRight();
-  public final SwerveModuleConstants backLeftModule = robotInfo.getBackLeft();
-  public final SwerveModuleConstants backRightModule = robotInfo.getBackRight();
-  
-  // The driver's controller
-  CommandXboxController m_driverController = new CommandXboxController(kDriverControllerPort);
-  CommandXboxController m_codriverController = new CommandXboxController(kCodriverControllerPort);
+    private static final double TURRET_OFFSET = 0.0;
 
-  // Subsystems \\
-  private final SwerveDrive m_robotDrive = new SwerveDrive(frontLeftModule, frontRightModule, backLeftModule, backRightModule);
-  private final FieldSim m_fieldSim = new FieldSim(m_robotDrive);
-  private final TeleopSwerve m_TeleopSwerve = new TeleopSwerve(m_robotDrive, m_driverController, translationAxis, strafeAxis, rotationAxis, true, true);
+    private GamePieceDetectionUtility m_GamePieceUtility = new GamePieceDetectionUtility("limelight-front");
 
-  //private final PitchIntakeSubsystem m_PitchIntakeSubsystem = new PitchIntakeSubsystem(Robot.isReal()? new PitchIntakeIORobot(14): new PitchIntakeIOSim());
-  
-  private final ArmSubsystem m_armSubsystem = new ArmSubsystem(Robot.isReal() ? new ArmIORobot(2, 4) : new ArmIOSim());
-  private final ManipulatorSubsystem m_manipulatorSubsystem = new ManipulatorSubsystem(new ManipulatorIORobot(6, 7));
-  private final TopRollerSubsystem m_topRollerSubsystem = new TopRollerSubsystem(5, 0);
-  private final MechanismSimulator m_mechanismSimulator = new MechanismSimulator(m_armSubsystem, /*m_PitchIntakeSubsystem,*/ m_robotDrive);
-  private final SlapstickSubsystem m_slapstickSubsystem = new SlapstickSubsystem(1);
+    // MK3 Falcon 13.6 ft/s 8.16:1 or 16.2 ft/s 6.86:1
+    // https://www.swervedrivespecialties.com/products/mk3-swerve-module?variant=31575980703857
+    final double MaxSpeed = Units.feetToMeters(16.2); //13.6); //  meters per second desired top speed
+    final double MaxAngularRate = Math.PI; // Half a rotation per second max angular velocity
 
-  // Utilities \\
-  // private final TimeOfFlightUtility m_timeOfFlight = new TimeOfFlightUtility(1);
-  private TargetScorePositionUtility m_targetScorePositionUtility = new TargetScorePositionUtility();
-  
-  // Commands \\
-  //private final RotateCommand m_rotateCommand = new RotateCommand(new Pose2d( 8.2423, 4.0513, new Rotation2d(0.0)), m_robotDrive);
-  private final AutoBalanceCommand m_autoBalanceCommand = new AutoBalanceCommand(m_robotDrive);
-  private final SwerveLockCommand m_SwerveLockCommand = new SwerveLockCommand(m_robotDrive, true);
-  private Command m_groundIntakeCommand = CommandFactoryUtility.createIntakeCommand(m_armSubsystem, m_manipulatorSubsystem, m_topRollerSubsystem);
-  private Command m_groundIntakeAndSlowDownCommand = CommandFactoryUtility.createIntakeAndSlowDownCommand(m_armSubsystem, m_manipulatorSubsystem, m_topRollerSubsystem, m_TeleopSwerve);
-  private Command m_stowArmCommand = CommandFactoryUtility.createStowArmCommand(m_armSubsystem, m_manipulatorSubsystem, m_topRollerSubsystem);
-  private Command m_stowArmAndSpeedUpCommand = CommandFactoryUtility.createStowArmAndSpeedUpCommand(m_armSubsystem, m_manipulatorSubsystem, m_topRollerSubsystem, m_TeleopSwerve);
-  private Command m_createScoreLowCommand = CommandFactoryUtility.createScoreLowCommand(m_armSubsystem, m_manipulatorSubsystem);
-  private Command m_createScoreMediumCommand = CommandFactoryUtility.createScoreMediumCommand(m_armSubsystem, m_manipulatorSubsystem);
-  private Command m_createScoreHighCommand = CommandFactoryUtility.createScoreHighCommand(m_armSubsystem, m_manipulatorSubsystem);
+    /* Setting up bindings for necessary control of the swerve drive platform */
+    SwerveDrivetrainSubsystem drivetrain = TunerConstants.DriveTrain; // My drivetrain
+    SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
+        //TODO LOOK AT Generated version -- .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
+        .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // I want field-cen
+
+    //--PID AND FF CONSTANTS--\\
+    private final Slot0Configs shootingS0C = 
+      new Slot0Configs()
+        .withKP(12)//TODO: Configure ALL
+        .withKI(0)
+        .withKD(0)
+        .withKA(0)
+        .withKG(0.5)
+        .withKS(0)
+        .withKV(0);
+
+    private final Slot0Configs shootingS0CSimulation = 
+      new Slot0Configs()
+        .withKP(1)//TODO: Configure ALL
+        .withKI(0)
+        .withKD(0)
+        .withKA(0)
+        .withKG(0)
+        .withKS(0)
+        .withKV(0);
+
+    private final Slot0Configs climbingS0C = 
+      new Slot0Configs()
+        .withKP(0)//TODO: Configure ALL
+        .withKI(0)
+        .withKD(0)
+        .withKA(0)
+        .withKG(0)
+        .withKS(0)
+        .withKV(0);
+
+    private final Slot0Configs pivotS0C =
+      new Slot0Configs()
+        .withKP(0) 
+        .withKI(0) 
+        .withKD(0) 
+        .withKA(0) 
+        .withKG(0) 
+        .withKS(0) 
+        .withKV(0);
+
+    private final ProfiledPIDController turretPID = new ProfiledPIDController(0.26, 0, 0, new Constraints(0, 0)); //TODO: Set good vals
+
+    // ks overcomes friction on the turret
+    private final SimpleMotorFeedforward turretFF = new SimpleMotorFeedforward(0.375, 0, 0); 
 
     
-  private AutoCommandManager m_autoManager;
-  private Map<String, Command> eventCommandMap = new HashMap<>();
+    //--MOTION MAGIC CONSTANTS--\\
+    
+    private final MotionMagicConfigs shootingMMC = 
+      new MotionMagicConfigs()
+        .withMotionMagicCruiseVelocity(5)
+        .withMotionMagicExpo_kV(1)
+        .withMotionMagicExpo_kA(4);
+    
+    private final MotionMagicConfigs climbingMMC = 
+      new MotionMagicConfigs()
+        .withMotionMagicCruiseVelocity(5)
+        .withMotionMagicExpo_kV(1)
+        .withMotionMagicExpo_kA(4);
+
+    private final MotionMagicConfigs pivotMMC =
+      new MotionMagicConfigs()
+        .withMotionMagicCruiseVelocity(80)
+        .withMotionMagicExpo_kV(1)
+        .withMotionMagicExpo_kA(4);
+
+    //--SUBSYSTEMS--\\
+
+    public final ElevatorSubsystem m_shootingElevatorSubsystem = new ElevatorSubsystem(
+      Robot.isReal()
+        ? new ElevatorIORobot(14, 15, CANBUS, shootingS0C, shootingMMC, ElevatorType.SHOOTING_ELEVATOR)
+        : new ElevatorIOSim(14, 15, CANBUS, shootingS0CSimulation, shootingMMC, ElevatorType.SHOOTING_ELEVATOR));
+
+    public final ElevatorSubsystem m_climbingElevatorSubsystem = new ElevatorSubsystem(
+      Robot.isReal()
+        ? new ElevatorIORobot(21, 22, CANBUS, climbingS0C,  climbingMMC, ElevatorType.CLIMBING_ELEVATOR)
+        : new ElevatorIOSim(21, 22, CANBUS, climbingS0C,  climbingMMC, ElevatorType.CLIMBING_ELEVATOR));
+
+    private final PivotSubsystem m_pivotSubsystem = new PivotSubsystem(
+      Robot.isReal()
+        ? new PivotIORobot(5, CANBUS, 1, pivotS0C, pivotMMC)
+        : new PivotIOSim(5, CANBUS, 1, pivotS0C, pivotMMC));
+
+    // TODO: Figure out real motor and encoder id
+    private final TurretSubsystem m_turretSubsystem = new TurretSubsystem(
+      Robot.isReal()
+        ? new TurretIORobot(6, TURRET_ENCODER_DIO, CANBUS, TURRET_OFFSET)
+        : new TurretIOSim(6, TURRET_ENCODER_DIO, CANBUS, TURRET_OFFSET), 
+        turretPID, turretFF);
+
+    private final ShooterSubsystem m_shooterSubsystem = new ShooterSubsystem(
+        Robot.isReal() ? new RollerMotorIORobot(3, CANBUS) : new RollerMotorIOSim(3, CANBUS),
+        Robot.isReal() ? new RollerMotorIORobot(4, CANBUS) : new RollerMotorIOSim(4, CANBUS));
+
+    private final IndexerSubsystem m_indexerSubsystem = new IndexerSubsystem(
+        Robot.isReal() ? new RollerMotorIORobot(20, CANBUS) : new RollerMotorIOSim(20, CANBUS),
+        Robot.isReal() ? new TimeOfFlightIORobot(3, 200) : new TimeOfFlightIOSim(3));
+
+    // TODO: Figure out real motor/ToF ids
+    private final IntakeSubsystem m_intakeSubsystem = new IntakeSubsystem(
+        Robot.isReal() ? new RollerMotorIORobot(19, CANBUS) : new RollerMotorIOSim(19, CANBUS),
+        Robot.isReal() ? new RollerMotorIORobot(7, CANBUS) : new RollerMotorIOSim(7, CANBUS),
+        Robot.isReal() ? new TimeOfFlightIORobot(1, 200) : new TimeOfFlightIOSim(1),
+        Robot.isReal() ? new TimeOfFlightIORobot(2, 200) : new TimeOfFlightIOSim(2));
+
+    MechanismViewer m_mechViewer = new MechanismViewer(m_pivotSubsystem, m_shootingElevatorSubsystem, m_climbingElevatorSubsystem, m_turretSubsystem);
+    
+    SwerveRequest.RobotCentric forwardStraight = new SwerveRequest.RobotCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
+    SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
+    SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
+    Telemetry logger = new Telemetry(MaxSpeed);
+    
+    private AutoCommandManager m_autoManager = new AutoCommandManager(drivetrain, m_GamePieceUtility);
+
+    SwerveRequest.Idle idle = new SwerveRequest.Idle();
+
+  // The robot's subsystems and commands are defined here...
+  
+  // private final SparkMaxShooterSubsystem m_sparkShooterSubsystem = new SparkMaxShooterSubsystem(3, 4);
+
+  // Replace with CommandPS4Controller or CommandJoystick if needed
+  private final CommandXboxController m_driverController =
+      new CommandXboxController(OperatorConstants.kDriverControllerPort);
+
+  private final CommandXboxController m_coDriverController =
+      new CommandXboxController(OperatorConstants.kCoDriverControllerPort);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
-    checkDSUpdate();
-
-    // Auto Commands
-    CommandFactoryUtility.addAutoCommandEvent(eventCommandMap, "intakeCube", 
-        m_armSubsystem, m_manipulatorSubsystem, m_topRollerSubsystem);
-    CommandFactoryUtility.addAutoCommandEvent(eventCommandMap, "stowArm", 
-        m_armSubsystem, m_manipulatorSubsystem, m_topRollerSubsystem);
-    CommandFactoryUtility.addAutoCommandEvent(eventCommandMap, "shootCube", 
-        m_armSubsystem, m_manipulatorSubsystem, m_topRollerSubsystem);
-
-    // eventCommandMap = new HashMap<>();
-
-    m_autoManager = new AutoCommandManager();
-    m_autoManager.addSubsystem(subNames.SwerveDriveSubsystem, m_robotDrive);
-    m_autoManager.addSubsystem(subNames.ArmSubsystem, m_armSubsystem);
-    m_autoManager.addSubsystem(subNames.ManipulatorSubsystem, m_manipulatorSubsystem);
-    m_autoManager.addSubsystem(subNames.TopRollerSubsystem, m_topRollerSubsystem);
-    m_autoManager.initCommands(eventCommandMap);
-
-    // Configure the button bindings
-    configureButtonBindings();
-    
-    // Configure default commands
-    m_robotDrive.setDefaultCommand(m_TeleopSwerve);
-    m_fieldSim.initSim();
-    // m_ExtendIntakeMotorSubsystem.setDefaultCommand(m_RetractIntakeCommand);
-    // m_PitchIntakeSubsystem.setDefaultCommand(new PitchIntakeCommand(m_PitchIntakeSubsystem, 0));
-    //stow arm position as default
-
-    // Sets the minimum and maximum pressure for the pneumatics system
-    // When the system is beneath the minimum psi, the compressor turns on
-    // When the system is above the maximum psi, the compressor turns off
-    compressor.enableAnalog(100, 115); // TODO: get values
+    // Configure the trigger bindings
+    configureTestBindings();
+    // configureBindings();
+    portForwardCameras();
   }
-  
+
   /**
-   * Use this method to define your button->command mappings. Buttons can be created by
-   * instantiating a {@link edu.wpi.first.wpilibj.GenericHID} or one of its subclasses ({@link
-   * edu.wpi.first.wpilibj.Joystick} or {@link XboxController}), and then calling passing it to a
-   * {@link JoystickButton}.
+   * Use this method to define your trigger->command mappings. Triggers can be created via the
+   * {@link Trigger#Trigger(java.util.function.BooleanSupplier)} constructor with an arbitrary
+   * predicate, or via the named factories in {@link
+   * edu.wpi.first.wpilibj2.command.button.CommandGenericHID}'s subclasses for {@link
+   * CommandXboxController Xbox}/{@link edu.wpi.first.wpilibj2.command.button.CommandPS4Controller
+   * PS4} controllers or {@link edu.wpi.first.wpilibj2.command.button.CommandJoystick Flight
+   * joysticks}.
    */
- 
-  private void configureButtonBindings() {
-
-    SmartDashboard.putBoolean(this.getClass().getSimpleName()+"/DriverController", DriverStation.getJoystickIsXbox(0));
-    SmartDashboard.putBoolean(this.getClass().getSimpleName()+"/Co-DriverController", DriverStation.getJoystickIsXbox(1));
+  private void configureBindings() {
+    SmartDashboard.putNumber("KrakenLeftMotor", 0.0);
+    SmartDashboard.putNumber("KrakenRightMotor", 0.0);
+    SmartDashboard.putNumber("IndexerSetSpeed", 0.0);
     
-    //Final Button Bindings
-    //--DRIVER CONTROLLER--//
-    //--CODRIVER CONTROLLER--//
 
-    // Slow drive
-    m_driverController.rightTrigger().onTrue(new InstantCommand(() -> m_TeleopSwerve.toggleSpeed()));
-  
-    //Lock wheels in an X position
-    m_driverController.a().toggleOnTrue(m_SwerveLockCommand);
+    // SmartDashboard.putNumber("LeftSparkMotor", 0.0);
+    // SmartDashboard.putNumber("RightSparkMotor", 0.0);
 
-    //Ground Intake
-    m_driverController.leftTrigger()
-      .onTrue(m_groundIntakeAndSlowDownCommand)
-      .onFalse(m_stowArmCommand);
+    //#region Default commands
+    drivetrain.setDefaultCommand( // Drivetrain will execute this command periodically
+            drivetrain.applyRequest(() -> drive.withVelocityX(negateBasedOnAlliance(-m_driverController.getLeftY() * MaxSpeed * PERCENT_SPEED)) // Drive forward with
+                                                                                              // negative Y (forward)
+                .withVelocityY(negateBasedOnAlliance(-m_driverController.getLeftX() * MaxSpeed * PERCENT_SPEED)) // Drive left with negative X (left)
+                .withRotationalRate(-m_driverController.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
+                .withDeadband(JOYSTICK_DEADBAND)
+                .withRotationalDeadband(JOYSTICK_ROTATIONAL_DEADBAND)
+            // ).ignoringDisable(true)); // TODO CAUSED ISSUES with jumping driving during characterization
+            ));
 
-    //Scoring
-    m_driverController.y()
-    .onTrue(
-      new ConditionalCommand(m_createScoreHighCommand, 
-        new ConditionalCommand(
-          m_createScoreMediumCommand, 
-          m_createScoreLowCommand, 
-          m_targetScorePositionUtility::isMedium), 
-        m_targetScorePositionUtility::isHigh)
-    )
-    .and(m_driverController.leftTrigger().negate())
-    .onFalse(m_stowArmCommand);
+    m_shootingElevatorSubsystem.setDefaultCommand(new SetElevatorPositionCommand(m_shootingElevatorSubsystem, 0.0));
+          
+    m_driverController.rightBumper().whileTrue(new SetElevatorPositionCommand(m_shootingElevatorSubsystem, 2.0));
+    
+    //#region Button controls
 
-    // Slapstick
-    m_codriverController.rightTrigger()
-      .onTrue(new SlapstickCommand(true, m_slapstickSubsystem))
-      .onFalse(new SlapstickCommand(false, m_slapstickSubsystem));
+    // m_driverController.y().whileTrue(new TestShooterCommand(m_shooterSubsystem));
+    m_driverController.y().whileTrue(new TestShooterCommand(m_shooterSubsystem));
+    
+    m_driverController.x().whileTrue(new TestIndexerCommand(m_indexerSubsystem));
 
-    m_codriverController.leftTrigger()
-      .onTrue(CommandFactoryUtility.createMaxSpeedCommand(m_manipulatorSubsystem))
-      .onFalse(CommandFactoryUtility.createStopSpeedCommand(m_manipulatorSubsystem));
+    m_driverController.a().whileTrue(drivetrain.applyRequest(() -> brake));
+    //#endregion
+    
+    //#region POV controls
+    m_driverController.pov(0).whileTrue(
+      drivetrain.applyRequest(() -> forwardStraight.withVelocityX(POV_PERCENT_SPEED * MaxSpeed).withVelocityY(0.0)
+      ));
+    m_driverController.pov(180).whileTrue(
+      drivetrain.applyRequest(() -> forwardStraight.withVelocityX(-POV_PERCENT_SPEED * MaxSpeed).withVelocityY(0.0)
+      ));
+    m_driverController.pov(90).whileTrue(
+      drivetrain.applyRequest(() -> forwardStraight.withVelocityX(0.0).withVelocityY(-POV_PERCENT_SPEED * MaxSpeed)
+      ));
+    m_driverController.pov(270).whileTrue(
+      drivetrain.applyRequest(() -> forwardStraight.withVelocityX(0.0).withVelocityY(POV_PERCENT_SPEED * MaxSpeed)
+      ));
+    //#endregion
 
-    //Scoring Positions
-    m_codriverController.povUp().toggleOnTrue(m_targetScorePositionUtility.setDesiredTargetCommand(Target.high));
-    m_codriverController.povLeft().toggleOnTrue(m_targetScorePositionUtility.setDesiredTargetCommand(Target.medium));
-    m_codriverController.povRight().toggleOnTrue(m_targetScorePositionUtility.setDesiredTargetCommand(Target.medium));
-    m_codriverController.povDown().toggleOnTrue(m_targetScorePositionUtility.setDesiredTargetCommand(Target.low));
+    //#region Trigger/Bumper controls
+    // reset the field-centric heading on left bumper press TODO test
+    m_driverController.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldRelative()));
 
-    // m_driverController.rightTrigger()
-    //   .onTrue(new SlapstickCommand(true, m_slapstickSubsystem)
-    //     .andThen(new WaitCommand(0.5))
-    //     .andThen(CommandFactoryUtility.createMaxSpeedCommand(m_manipulatorSubsystem)))
-    //   .onFalse(new SlapstickCommand(false, m_slapstickSubsystem)
-    //     .andThen(CommandFactoryUtility.createHoldSpeedCommand(m_manipulatorSubsystem)));
-  }
+    m_driverController.leftTrigger().whileTrue(new LimeLightIntakeCommand(drivetrain, m_GamePieceUtility, new Pose2d(1.0, 0.0, new Rotation2d(0.0))));
+    
+    //#endregion 
 
-  void checkDSUpdate() {
-    Optional <Alliance> currentAllianceOpt = DriverStation.getAlliance();
-    Alliance currentAlliance = currentAllianceOpt.isPresent()?currentAllianceOpt.get():null;
+    drivetrain.registerTelemetry(logger::telemeterize);
 
-    // If we have data, and have a new alliance from last time
-    if (DriverStation.isDSAttached() && currentAlliance != null && currentAlliance != alliance) {
-      // m_robotDrive.setOriginBasedOnAlliance(); no longer used because of April Tags
-      alliance = currentAlliance;
-      allianceAssigned = true;
     }
+  
+  private void configureTestBindings() {
+    SmartDashboard.putNumber("TurretSetPosition", 0.0);
+    SmartDashboard.putNumber("ShooterLeftMotor", 0.0);
+    SmartDashboard.putNumber("ShooterRightMotor", 0.0);
+    SmartDashboard.putNumber("IndexerMotor", 0.0);
 
-    // Logger.getInstance().recordOutput(this.getClass().getSimpleName()+"/currentAlliance", currentAlliance.toString());
-  } 
+    m_intakeSubsystem.setDefaultCommand(
+      new RunIntakeCommand(m_intakeSubsystem, -.15)
+    );
+
+    // m_turretSubsystem.setDefaultCommand(new InstantCommand(() -> m_turretSubsystem.setSpeed(m_driverController.getLeftX() / 4),m_turretSubsystem));
+
+    m_driverController.b().whileTrue(new SetTurretPositionCommand(m_turretSubsystem, SmartDashboard.getNumber("TurretSetPosition", 0.0)));
+
+    m_driverController.rightTrigger().whileTrue(
+      new RunIntakeCommand(m_intakeSubsystem,0.6)
+      .alongWith(new IndexerCommand(m_indexerSubsystem,SmartDashboard.getNumber("IndexerMotor",0.0)))
+      .until(() -> m_indexerSubsystem.getSensor())); // Ends intake when note is detected in indexer
+  
+    m_driverController.leftTrigger().whileTrue(new ShooterCommand(m_shooterSubsystem,SmartDashboard.getNumber("ShooterLeftMotor", 0.0)/100,SmartDashboard.getNumber("ShooterRightMotor", 0.0)/100));
+  }
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
@@ -245,82 +334,94 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    checkDSUpdate();
-    
-    // If not FMS controlled add to teleop init too (for practice match and Red/Blue alliance need to be correctly set)
-    return m_autoManager.getAutonomousCommand();
-    //TODO determine if autoManager needs to have andThen(() -> m_robotDrive.drive(0, 0, 0, false,false));
+    // An example command will be run in autonomous
+    return m_autoManager.getAutoManagerSelected();
+  }
+
+  public void robotPeriodic() {
+    updateAllVision();
+    m_mechViewer.periodic();
+  }
+
+  /*
+   * Sets the port offsets
+   */
+  public void portForwardCameras() {
+    // portForwardLimelight("front", 0);
+    // portForwardLimelight("side", 10);
+
+    portForwardLimelight("10.99.90.12", 0);
+    portForwardLimelight("10.99.90.11", 10);
   }
 
   /**
-   * Method to run before teleop starts, needed to help reset April Tag direction before teleop if operator does not do 
-   * autonomous first.
+   * Update all vision
    */
-  public void teleopInit() {
-    // If not FMS controlled add to teleop init too (for practice match and Red/Blue alliance need to be correctly set)
-    if(!DriverStation.isFMSAttached()) {
-      // m_robotDrive.setOriginBasedOnAlliance(); No longer using since April Tags are no longer being used
+  public void updateAllVision() {
+    if (UseLimeLightAprilTag) {  
+      updateVisionOdometry("front");
+      updateVisionOdometry("side");
     }
-    
-    refollowAllMotors();
-
   }
 
-  public void periodic() {
-    checkDSUpdate();
+  /**
+   * Prints limelight, and limelight name. If the last result was valid, and the length is bigger than 0.
+   * If there is a alliance to get the alliance, and if its red it sets the alliance to red; otherwise it sets the alliance to blue.
+   * @param limeLightName
+   */
+  public void updateVisionOdometry(String limeLightName) {
+      boolean useResult = true;
+      Results lastResult = LimelightHelpers.getLatestResults("limelight-" + limeLightName).targetingResults;
+      if (lastResult.valid && lastResult.targets_Fiducials.length > 0 && lastResult.targets_Fiducials[0].fiducialID != 0) {
+          if (lastResult.targets_Fiducials.length == 1) {
+              if (LimelightHelpers.getTA("limelight-" + limeLightName) > 0.27) { //The robot must be close to use only one April Tag at a time
+                useResult = true;
+              } else {
+                useResult = false;
+              }
+          } else {
+              useResult = true;
+          }
 
-    m_fieldSim.periodic();
-    m_mechanismSimulator.periodic();
-
-    // TODO: Fix, This crashes code
-    // if(m_timeOfFlight.sensorDetected()){
-    //   m_CurrentPitchIntakeCommand = m_LowPitchIntakeCommand;
-    // }
-    // else{
-    //   m_CurrentPitchIntakeCommand = m_HighPitchIntakeCommand;
-    // }
+          if (useResult) { //Always update odometry through blue alliance because blue origin is always (0,0)
+              drivetrain.addVisionMeasurement(lastResult.getBotPose2d_wpiBlue(), Timer.getFPGATimestamp()); 
+          }
+      }
   }
 
-  public void disabledInit() {
+  /** 
+   * This method makes a port for the limelights
+   * @param limeLightName the name of the Limelights
+   * @param portOffset the offset needed to ensure that the ports for the cameras are not the same
+   */
+  public void portForwardLimelight(String limeLightName, int portOffset) {
+      for (int limeLightPort = 5800; limeLightPort <= 5807; limeLightPort++) {
+          int pcPort = limeLightPort + portOffset;
+          // PortForwarder.add(pcPort, "limelight-" + limeLightName, limeLightPort);
+          PortForwarder.add(pcPort, limeLightName, limeLightPort);
+      }
   }
-
-  public void testInit() {
-    stopSubsystems();
-    refollowAllMotors();
-  }
-
-  public void testPeriodic() {
-    
-    /*
-     * Code for testing slapstick and top piston
-     * 
-    // Moves slapstick when left bumper is pressed.
-    if (m_driverController.leftBumper().getAsBoolean()) {
-      m_slapstickSubsystem.setState(true);
-    } else{
-      m_slapstickSubsystem.setState(false);
+  /**
+   * Checks whether alliance is red or blue so that teleop has correct facing controls IE: negate joystick value
+   * 
+   * @param joystickValue
+   * @return negative or positive coordinate values depending on what alliance robot is on
+   */
+  public double negateBasedOnAlliance(double joystickValue) {
+    Optional<Alliance> optionalAlliance = DriverStation.getAlliance();
+    //if on red alliance, return as negative
+    //if on blue alliance, return as positive
+    if (optionalAlliance.isPresent()){
+      Alliance alliance = optionalAlliance.get();
+      if (alliance == Alliance.Red) {
+         return joystickValue*-1;
+      }
     }
-
-    // Moves top piston when right bumper is pressed.
-    if(m_driverController.rightBumper().getAsBoolean()){
-      m_topRollerSubsystem.setPistonState(true); 
-    }else{
-      m_topRollerSubsystem.setPistonState(false);
-    }
-    */
-
+    return joystickValue;
   }
 
-  public void testExit() {
-    refollowAllMotors();
-  }
-
-  private void refollowAllMotors() {
-    m_manipulatorSubsystem.refollowMotors();
-  }
-
-  private void stopSubsystems() {
-    m_manipulatorSubsystem.setRollerSpeed(0.0);
+  public void simulationPeriodic() {
+    // mechanismSimulator.periodic(); // Moved to robotPeriodic()
   }
 
 }

@@ -1,56 +1,119 @@
 {
   "HALProvider": {
-    "RoboRIO": {
-      "window": {
-        "visible": true
+    "Other Devices": {
+      "Talon FX (v6)[20]": {
+        "header": {
+          "open": true
+        }
+      },
+      "Talon FX (v6)[3]": {
+        "header": {
+          "open": true
+        }
+      },
+      "Talon FX (v6)[4]": {
+        "header": {
+          "open": true
+        }
       }
     }
   },
   "NTProvider": {
     "types": {
+      "/AdvantageKit/RealOutputs/MechanismSimulator/mechanism2d": "Mechanism2d",
+      "/AdvantageKit/RealOutputs/MechanismSimulator/turret2d": "Mechanism2d",
+      "/AdvantageKit/RealOutputs/MechanismViewer/mechanism2d": "Mechanism2d",
+      "/AdvantageKit/RealOutputs/MechanismViewer/turret2d": "Mechanism2d",
       "/FMSInfo": "FMSInfo",
-      "/LiveWindow/SwerveModule": "Subsystem",
-      "/LiveWindow/Ungrouped/PIDController[10]": "PIDController",
-      "/LiveWindow/Ungrouped/PIDController[11]": "PIDController",
-      "/LiveWindow/Ungrouped/PIDController[12]": "PIDController",
-      "/LiveWindow/Ungrouped/PIDController[13]": "PIDController",
-      "/LiveWindow/Ungrouped/PIDController[14]": "PIDController",
-      "/LiveWindow/Ungrouped/PIDController[1]": "PIDController",
-      "/LiveWindow/Ungrouped/PIDController[2]": "PIDController",
-      "/LiveWindow/Ungrouped/PIDController[3]": "PIDController",
-      "/LiveWindow/Ungrouped/PIDController[4]": "PIDController",
-      "/LiveWindow/Ungrouped/PIDController[5]": "PIDController",
-      "/LiveWindow/Ungrouped/PIDController[6]": "PIDController",
-      "/LiveWindow/Ungrouped/PIDController[7]": "PIDController",
-      "/LiveWindow/Ungrouped/PIDController[8]": "PIDController",
-      "/LiveWindow/Ungrouped/PIDController[9]": "PIDController",
-      "/LiveWindow/Ungrouped/Scheduler": "Scheduler",
-      "/SmartDashboard/Auto choices": "String Chooser",
-      "/SmartDashboard/FieldSim/Field2d": "Field2d",
-      "/SmartDashboard/Mech2d": "Mechanism2d",
-      "/SmartDashboard/PP_Field": "Field2d"
+      "/Pose": "Field2d",
+      "/SmartDashboard/MechanismSimulator/mechanism2d": "Mechanism2d",
+      "/SmartDashboard/MechanismSimulator/turret2d": "Mechanism2d",
+      "/SmartDashboard/Module 0": "Mechanism2d",
+      "/SmartDashboard/Module 1": "Mechanism2d",
+      "/SmartDashboard/Module 2": "Mechanism2d",
+      "/SmartDashboard/Module 3": "Mechanism2d",
+      "/SmartDashboard/SelectAuto": "String Chooser",
+      "/SmartDashboard/pp_field": "Field2d"
     },
     "windows": {
-      "/SmartDashboard/Auto choices": {
+      "/AdvantageKit/RealOutputs/MechanismViewer/mechanism2d": {
         "window": {
           "visible": true
         }
       },
-      "/SmartDashboard/FieldSim/Field2d": {
+      "/AdvantageKit/RealOutputs/MechanismViewer/turret2d": {
         "window": {
           "visible": true
         }
       },
-      "/SmartDashboard/Mech2d": {
+      "/Pose": {
+        "bottom": 1476,
+        "height": 8.210550308227539,
+        "left": 150,
+        "right": 2961,
+        "top": 79,
+        "width": 16.541748046875,
         "window": {
           "visible": true
         }
       },
-      "/SmartDashboard/PP_Field": {
+      "/SmartDashboard/Module 0": {
+        "window": {
+          "visible": true
+        }
+      },
+      "/SmartDashboard/Module 1": {
+        "window": {
+          "visible": true
+        }
+      },
+      "/SmartDashboard/Module 2": {
+        "window": {
+          "visible": true
+        }
+      },
+      "/SmartDashboard/Module 3": {
+        "window": {
+          "visible": true
+        }
+      },
+      "/SmartDashboard/SelectAuto": {
+        "window": {
+          "visible": true
+        }
+      },
+      "/SmartDashboard/pp_field": {
+        "bottom": 1476,
+        "height": 8.210550308227539,
+        "left": 150,
+        "right": 2961,
+        "top": 79,
+        "width": 16.541748046875,
         "window": {
           "visible": true
         }
       }
     }
+  },
+  "NetworkTables": {
+    "Persistent Values": {
+      "open": false
+    },
+    "retained": {
+      "SmartDashboard": {
+        "SelectAuto": {
+          "open": true
+        },
+        "open": true
+      }
+    },
+    "transitory": {
+      "SmartDashboard": {
+        "open": true
+      }
+    }
+  },
+  "NetworkTables Info": {
+    "visible": true
   }
 }
