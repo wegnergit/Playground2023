@@ -12,6 +12,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.util.Units;
 import frc.robot.IOs.TalonPosIO;
+import frc.robot.utilities.Phoenix6Utility;
 
 /**
  * <h3>ElevatorIORobot</h3>
@@ -46,14 +47,18 @@ public class ElevatorIORobot implements TalonPosIO {
         cfg.Feedback.SensorToMechanismRatio = this.gearRatio; //The ratio between the motor turning and the elevator moving. We may have to invert this
         cfg.withMotionMagic(mmConfigs); // The Motion Magic configs
 
-       // leftElevatorFollower.getConfigurator().apply(cfg);
-        rightElevatorMaster.getConfigurator().apply(cfg);
-      //  leftElevatorFollower.setNeutralMode(NeutralModeValue.Brake);
+        // Phoenix6UtilsUtils.setTalonFxConfiguration(leftElevatorFollower, cfg, true);
+        Phoenix6Utility.setTalonFxConfiguration(rightElevatorMaster, cfg, true);
+
+        //  leftElevatorFollower.setNeutralMode(NeutralModeValue.Brake);
         rightElevatorMaster.setNeutralMode(NeutralModeValue.Brake);
         rightElevatorMaster.setInverted(true);
 
-      //  leftElevatorFollower.setControl(new Follower(rightElevatorMaster.getDeviceID(), true));
-        rightElevatorMaster.setControl(m_request.withPosition(0).withSlot(0));
+        // Phoenix6UtilsUtils.retryConfigApply(leftElevatorFollower, 
+        //     () -> leftElevatorFollower.setControl(new Follower(rightElevatorMaster.getDeviceID(), true)));
+        
+        Phoenix6Utility.applyConfigAndRetry(rightElevatorMaster, 
+            () -> rightElevatorMaster.setControl(m_request.withPosition(0).withSlot(0)));
     }
     
 
@@ -65,7 +70,8 @@ public class ElevatorIORobot implements TalonPosIO {
      */
     @Override
     public void setTarget(double height) {
-        rightElevatorMaster.setControl(m_request.withPosition(MathUtil.clamp((height),0,maxHeight)).withSlot(0));
+        Phoenix6Utility.applyConfigAndNoRetry(rightElevatorMaster, 
+            () -> rightElevatorMaster.setControl(m_request.withPosition(MathUtil.clamp((height),0,maxHeight)).withSlot(0)));
     }
 
     @Override

@@ -8,6 +8,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import frc.robot.IOs.TalonTurretIO;
+import frc.robot.utilities.Phoenix6Utility;
 
 /**
  * <h3>TurretIORobot</h3>
@@ -28,8 +29,7 @@ public class TurretIORobot implements TalonTurretIO{
 
         m_encoder.setPositionOffset(offset);
 
-        TalonFXConfiguration cfg = new TalonFXConfiguration();
-        m_motor.getConfigurator().apply(cfg);
+        Phoenix6Utility.resetTalonFxFactoryDefaults(m_motor);
 
         m_motor.setNeutralMode(NeutralModeValue.Brake);
     }
@@ -41,7 +41,8 @@ public class TurretIORobot implements TalonTurretIO{
 
     @Override
     public void setVoltage(double volts) {
-        m_motor.setControl(m_outputRequest.withOutput(volts));
+        Phoenix6Utility.applyConfigAndNoRetry(m_motor, 
+            () -> m_motor.setControl(m_outputRequest.withOutput(volts)));
     }
 
     @Override
