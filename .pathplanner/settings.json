@@ -1,7 +1,20 @@
 {
-  "robotWidth": 0.47,
-  "robotLength": 0.55,
+  "robotWidth": 0.889,
+  "robotLength": 0.889,
   "holonomicMode": true,
-  "generateJSON": true,
-  "generateCSV": false
+  "pathFolders": [
+    "Amp",
+    "BotSpeaker",
+    "MidSpeaker",
+    "Robot2024",
+    "TopSpeaker"
+  ],
+  "autoFolders": [
+    "Robot2024"
+  ],
+  "defaultMaxVel": 6.0,
+  "defaultMaxAccel": 3.0,
+  "defaultMaxAngVel": 540.0,
+  "defaultMaxAngAccel": 720.0,
+  "maxModuleSpeed": 4.5
 }

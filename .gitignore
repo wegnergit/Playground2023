@@ -158,8 +158,24 @@ gradle-app.setting
 .settings/
 bin/
 
-# Simulation GUI and other tools window save file
-*-window.json
+# IntelliJ
+*.iml
+*.ipr
+*.iws
+.idea/
+out/
 
-## Advantage Kit
+# Fleet
+.fleet
+
+# Simulation GUI and other tools window save file
+#*-window.json
+
+# Simulation data log directory
+logs/
+
+# Folder that has CTRE Phoenix Sim device config storage
+ctre_sim/
+
+### AdvantageKit
 src/main/java/frc/robot/BuildConstants.java

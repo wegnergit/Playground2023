@@ -1,6 +1,7 @@
 {
   "download": {
-    "localDir": "C:\\frc\\2023\\logs",
-    "serverTeam": "930"
+    "localDir": "C:\\Users\\JackL\\Desktop\\Log folder",
+    "serverTeam": "10.99.90.2",
+    "visible": false
   }
 }

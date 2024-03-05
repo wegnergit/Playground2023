@@ -3,20 +3,21 @@
 // the WPILib BSD license file in the root directory of this project.
 
 package frc.robot;
+
+import java.io.File;
+
 import org.littletonrobotics.junction.LogFileUtil;
-// Advantage Kit
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
-import org.littletonrobotics.junction.inputs.LoggedPowerDistribution;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.PowerDistribution;
+import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.utilities.OdometryUtility;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -25,13 +26,6 @@ import frc.robot.utilities.OdometryUtility;
  * project.
  */
 public class Robot extends LoggedRobot {
-
-  private static final int REAL = 0;
-
-  private static final int SIM = 1;
-
-  private static final int REPLAY = 2;
-
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
@@ -43,67 +37,54 @@ public class Robot extends LoggedRobot {
   @Override
   public void robotInit() {
 
-    // Allow pyshical Photonvison cammera to be used while simulating on PC
-    // https://docs.photonvision.org/en/latest/docs/programming/photonlib/hardware-in-the-loop-sim.html
-    // NOTE Requires Photolib camera to run network server!!!! But this will break on setting is on when used on robot
-    if(RobotBase.isSimulation() && OdometryUtility.CONNECTED_PHOTOVISION_CAMERA) {
-      NetworkTableInstance inst = NetworkTableInstance.getDefault();
-      inst.stopServer();
-      // Change the IP address in the below function to the IP address you use to connect to the PhotonVision UI.
-      inst.setServer(OdometryUtility.PHOTOVISION_NETWORK_SERVER); // photonvision.local
-      inst.startClient4("Robot Simulation");
-   }
-
-
     //Advantage Kit
-    Logger logger = Logger.getInstance();
-    //TODO setUseTiming(Constants.getMode() != Mode.REPLAY);
-    logger.recordMetadata("Robot", "FRCRobot");
-    logger.recordMetadata("TuningMode", Boolean.toString(false));
-    logger.recordMetadata("RuntimeType", getRuntimeType().toString());
-    logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
-    logger.recordMetadata("BuildDate", BuildConstants.BUILD_DATE);
-    logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
-    logger.recordMetadata("GitDate", BuildConstants.GIT_DATE);
-    logger.recordMetadata("GitBranch", BuildConstants.GIT_BRANCH);
+    Logger.recordMetadata("ProjectName", "Robot2024");
+    Logger.recordMetadata("Robot", "FRCRobot");
+    Logger.recordMetadata("TuningMode", Boolean.toString(false));
+    Logger.recordMetadata("RuntimeType", getRuntimeType().toString());
+    Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
+    Logger.recordMetadata("BuildDate", BuildConstants.BUILD_DATE);
+    Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
+    Logger.recordMetadata("GitDate", BuildConstants.GIT_DATE);
+    Logger.recordMetadata("GitBranch", BuildConstants.GIT_BRANCH);
     switch (BuildConstants.DIRTY) {
       case 0:
-        logger.recordMetadata("GitDirty", "All changes committed");
+        Logger.recordMetadata("GitDirty", "All changes committed");
         break;
       case 1:
-        logger.recordMetadata("GitDirty", "Uncomitted changes");
+        Logger.recordMetadata("GitDirty", "Uncomitted changes");
         break;
       default:
-        logger.recordMetadata("GitDirty", "Unknown");
+        Logger.recordMetadata("GitDirty", "Unknown");
         break;
     }
-    int mode = SIM;
-    mode = Robot.isReal()?REAL:SIM;
-    switch (mode) {
-      case REAL:
-        String folder = "/media/sda1/";
-        folder = "/home/lvuser";
-        if (folder != null) {
-          logger.addDataReceiver(new WPILOGWriter(folder));
-        // } else {
-          //TODO logNoFileAlert.set(true);
-        }
-        logger.addDataReceiver(new NT4Publisher());
-        LoggedPowerDistribution.getInstance();
-        break;
-      case SIM:
-        logger.addDataReceiver(new NT4Publisher());
-        break;
-      case REPLAY:
-        String path = LogFileUtil.findReplayLog();
-        logger.setReplaySource(new WPILOGReader(path));
-        logger.addDataReceiver(
-            new WPILOGWriter(LogFileUtil.addPathSuffix(path, "_sim")));
-        break;
-    }
-    logger.start();
+    if (isReal()) {
+      String folder = "/media/sda1/logs"; // default /U/logs not working
+      WPILOGWriter writer = new WPILOGWriter(folder); // Log to a USB stick ("/media/sda1")
+      File logFolder = new File(folder);
+      if (!logFolder.exists()) {
+        writer = new WPILOGWriter("/home/lvuser/logs");
+        DriverStation.reportWarning("Usb stick not in roborio so not saving logs on /U/logs folder, but in "+folder, false);
+      }
+      Logger.addDataReceiver(writer); 
+      Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
+      new PowerDistribution(1, ModuleType.kRev); // Enables power distribution logging
+  } else {
+      Boolean replay = false;
+      if(!replay) {
+        Logger.addDataReceiver(new NT4Publisher());
+      } else {
+        setUseTiming(false); // Run as fast as possible
+        String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from AdvantageScope (or prompt the user)
+        Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
+        Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
+      }
+  }
+  
+  // Logger.disableDeterministicTimestamps() // See "Deterministic Timestamps" in the "Understanding Data Flow" page
+  Logger.start(); // Start logging! No more data receivers, replay sources, or metadata values may be added.
 
-    
+
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
@@ -123,8 +104,7 @@ public class Robot extends LoggedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
-    //Needed for simulation
-    m_robotContainer.periodic();
+    m_robotContainer.robotPeriodic();
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
@@ -136,14 +116,15 @@ public class Robot extends LoggedRobot {
   @Override
   public void disabledPeriodic() {}
 
-  /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
+  @Override
+  public void disabledExit() {}
+
+   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
-     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
-    
-    
+    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
-    // schedule the autonomous command (example)
+  // schedule the autonomous command (example)
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
     }
@@ -154,6 +135,9 @@ public class Robot extends LoggedRobot {
   public void autonomousPeriodic() {}
 
   @Override
+  public void autonomousExit() {}
+
+  @Override
   public void teleopInit() {
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
@@ -162,6 +146,7 @@ public class Robot extends LoggedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
+    m_robotContainer.teleopInit();
   }
 
   /** This function is called periodically during operator control. */
@@ -169,14 +154,12 @@ public class Robot extends LoggedRobot {
   public void teleopPeriodic() {}
 
   @Override
+  public void teleopExit() {}
+
+  @Override
   public void testInit() {
     // Cancels all running commands at the start of test mode.
     CommandScheduler.getInstance().cancelAll();
-  }
-
-  @Override
-  public void testExit(){
-      // TODO m_robotContaner.testExit();
   }
 
   /** This function is called periodically during test mode. */
@@ -187,7 +170,11 @@ public class Robot extends LoggedRobot {
   @Override
   public void simulationInit() {}
 
-  /** This function is called periodically whilst in simulation. */
   @Override
-  public void simulationPeriodic() {}
+  public void simulationPeriodic() {
+    m_robotContainer.simulationPeriodic();
+  }
+
+  @Override
+  public void testExit() {}
 }
