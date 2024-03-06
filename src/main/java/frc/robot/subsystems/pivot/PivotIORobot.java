@@ -65,7 +65,7 @@ public class PivotIORobot implements TalonPosIO{
         cfg.Feedback.FeedbackRemoteSensorID = m_cc.getDeviceID();
         cfg.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder;
         cfg.Feedback.SensorToMechanismRatio = 1.0;  // TODO NEED to configure
-        cfg.Feedback.SensorToMechanismRatio = gearRatio; // Applies gear ratio
+        cfg.Feedback.RotorToSensorRatio = gearRatio; // Applies gear ratio
 
         cfg.CurrentLimits.SupplyCurrentLimitEnable = true; 
         cfg.CurrentLimits.SupplyCurrentThreshold = 0; // the peak supply current, in amps 
