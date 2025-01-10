@@ -80,7 +80,7 @@ public class TunerConstants {
 
   // Theoretical free speed (m/s) at 12 V applied output;
   // This needs to be tuned to your individual robot
-  // mk3 Falcon unadjusted speed (13.6 ft/s)
+  // mk3 Falcon unadjusted speed (std: 13.6 ft/s  - fast: 16.2 ft/s )
   public static final LinearVelocity kSpeedAt12Volts = MetersPerSecond.of(4.15);
 
   // Every 1 rotation of the azimuth results in kCoupleRatio drive motor turns;
@@ -88,7 +88,8 @@ public class TunerConstants {
   private static final double kCoupleRatio =
       3.5714285714285716; // TODO Validate, was 0 on old robot
 
-  private static final double kDriveGearRatio = 8.16; // Standard mk3 module
+  // https://www.swervedrivespecialties.com/collections/kits/products/mk3-swerve-module?variant=39420432121969
+  private static final double kDriveGearRatio = 8.16; // Standard mk3 module 8.16 std/6.86 fast
   private static final double kSteerGearRatio = 12.8; // standard mk3 module
   private static final Distance kWheelRadius = Inches.of(2);
 
