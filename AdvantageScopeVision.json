@@ -1,10 +1,10 @@
 {
   "hubs": [
     {
-      "x": 139,
-      "y": 95,
+      "x": 90,
+      "y": 34,
       "width": 1100,
-      "height": 650,
+      "height": 654,
       "state": {
         "sidebar": {
           "width": 300,
@@ -13,11 +13,33 @@
             "NT:/AdvantageKit/RealOutputs",
             "NT:/AdvantageKit/RealOutputs/SwerveStates",
             "NT:/AdvantageKit/RealOutputs/SwerveChassisSpeeds",
-            "NT:/AdvantageKit/RealOutputs/Odometry"
+            "NT:/AdvantageKit/RealOutputs/Odometry",
+            "/AdvantageKit",
+            "/AdvantageKit/Vision",
+            "/AdvantageKit/RealOutputs",
+            "/AdvantageKit/RealOutputs/Vision",
+            "/AdvantageKit/RealOutputs/Vision/Summary",
+            "/AdvantageKit/RealOutputs/Vision/Summary/RobotPosesAccepted",
+            "/AdvantageKit/RealOutputs/Vision/Summary/RobotPoses",
+            "/AdvantageKit/RealOutputs/Vision/Summary/TagPoses",
+            "/limelight-back/botpose_wpiblue",
+            "/AdvantageKit/Vision/Camera1",
+            "/AdvantageKit/Vision/Camera1/LatestTargetObservation",
+            "/AdvantageKit/Vision/Camera1/LatestTargetObservation/tx",
+            "/AdvantageKit/Vision/Camera1/LatestTargetObservation/ty",
+            "/AdvantageKit/Vision/Camera0/PoseObservations",
+            "/AdvantageKit/Vision/Camera0/LatestTargetObservation",
+            "/AdvantageKit/Vision/Camera0/LatestTargetObservation/tx",
+            "/AdvantageKit/Vision/Camera0/LatestTargetObservation/ty",
+            "/AdvantageKit/Vision/Camera1/TagIds",
+            "/limelight-back",
+            "/AdvantageKit/Vision/Camera0",
+            "/limelight-front",
+            "/limelight-back/botpose_orb_wpired"
           ]
         },
         "tabs": {
-          "selected": 1,
+          "selected": 2,
           "tabs": [
             {
               "type": 0,
@@ -102,37 +124,37 @@
                     }
                   },
                   {
-                    "type": "trajectory",
-                    "logKey": "NT:/AdvantageKit/RealOutputs/Odometry/Trajectory",
-                    "logType": "Pose2d[]",
+                    "type": "ghost",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Vision/Summary/RobotPoses",
+                    "logType": "Pose3d[]",
                     "visible": true,
                     "options": {
-                      "color": "#ff8c00",
-                      "size": "normal"
+                      "model": "2025 KitBot",
+                      "color": "#00ff00"
                     }
                   },
                   {
-                    "type": "ghost",
-                    "logKey": "NT:/AdvantageKit/RealOutputs/Odometry/TrajectorySetpoint",
-                    "logType": "Pose2d",
+                    "type": "vision",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Vision/Summary/TagPoses",
+                    "logType": "Pose3d[]",
                     "visible": true,
                     "options": {
-                      "model": "Crab Bot",
-                      "color": "#ff8c00"
+                      "color": "#00ff00",
+                      "size": "normal"
                     }
                   }
                 ],
                 "game": "2025 Field",
-                "origin": "blue"
+                "origin": "auto"
               },
               "controllerUUID": "psf0y633oclnjyocus23hcnq1d4tpyte",
               "renderer": {
                 "cameraIndex": -1,
                 "orbitFov": 50,
                 "cameraPosition": [
-                  1.4695761589768238e-15,
-                  5.999999999999999,
-                  -12
+                  12.644166389153487,
+                  14.07771148338866,
+                  0.28999842627536004
                 ],
                 "cameraTarget": [
                   0,
@@ -140,7 +162,7 @@
                   0
                 ]
               },
-              "controlsHeight": 200
+              "controlsHeight": 270
             },
             {
               "type": 1,
@@ -459,5 +481,5 @@
     }
   ],
   "satellites": [],
-  "version": "4.0.0-beta-3"
+  "version": "4.1.1"
 }

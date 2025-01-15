@@ -68,6 +68,7 @@ public class Vision extends SubsystemBase {
   public void periodic() {
     for (int i = 0; i < io.length; i++) {
       io[i].updateInputs(inputs[i]);
+      // TODO May want to find way to Log by Camera Name verses where in input array
       Logger.processInputs("Vision/Camera" + Integer.toString(i), inputs[i]);
     }
 
@@ -143,10 +144,11 @@ public class Vision extends SubsystemBase {
         consumer.accept(
             observation.pose().toPose2d(),
             observation.timestamp(),
-            VecBuilder.fill(0.9, 0.9, 0.9)); // (linearStdDev, linearStdDev, angularStdDev));
+            VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev));
       }
 
       // Log camera datadata
+      // TODO May want to find way to Log by Camera Name verses where in input array
       Logger.recordOutput(
           "Vision/Camera" + Integer.toString(cameraIndex) + "/TagPoses",
           tagPoses.toArray(new Pose3d[tagPoses.size()]));
