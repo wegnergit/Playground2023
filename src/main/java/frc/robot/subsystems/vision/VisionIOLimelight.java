@@ -93,7 +93,7 @@ public class VisionIOLimelight implements VisionIO {
               rawSample.value.length >= 17 ? rawSample.value[16] : 0.0,
 
               // Tag count
-              (int) rawSample.value[8],
+              (int) rawSample.value[8] + 1,
 
               // Average tag distance
               rawSample.value[10],

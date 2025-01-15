@@ -103,8 +103,8 @@ public class Vision extends SubsystemBase {
             observation.tagCount() == 0 // Must have at least one tag
                 || (observation.tagCount() == 1
                     && observation.ambiguity() > maxAmbiguity) // Cannot be high ambiguity
-                || Math.abs(observation.pose().getZ())
-                    > maxZError // Must have realistic Z coordinate
+                // || Math.abs(observation.pose().getZ())
+                //   > maxZError // Must have realistic Z coordinate
 
                 // Must be within the field boundaries
                 || observation.pose().getX() < 0.0
@@ -143,7 +143,7 @@ public class Vision extends SubsystemBase {
         consumer.accept(
             observation.pose().toPose2d(),
             observation.timestamp(),
-            VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev));
+            VecBuilder.fill(0.9, 0.9, 0.9)); // (linearStdDev, linearStdDev, angularStdDev));
       }
 
       // Log camera datadata

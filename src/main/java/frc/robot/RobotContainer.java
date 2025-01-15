@@ -19,7 +19,10 @@
  */
 package frc.robot;
 
-import static frc.robot.subsystems.vision.VisionConstants.*;
+import static frc.robot.subsystems.vision.VisionConstants.limelightBackName;
+import static frc.robot.subsystems.vision.VisionConstants.limelightFrontName;
+import static frc.robot.subsystems.vision.VisionConstants.robotToCameraBack;
+import static frc.robot.subsystems.vision.VisionConstants.robotToCameraFront;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -55,7 +58,10 @@ public class RobotContainer {
 
   private final StartInTeleopUtility m_StartInTeleopUtility;
 
-  private final PukerSubsystem m_pukerSubsystem = new PukerSubsystem(20);
+  private final PukerSubsystem m_pukerSubsystem = new PukerSubsystem(20, 0.10);
+
+  private final double DRIVE_SPEED = 0.75;
+  private final double ANGULAR_SPEED = 0.75;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -64,7 +70,7 @@ public class RobotContainer {
 
   private AutoCommandManager autoCommandManager;
 
-  private boolean m_TeleopInitalized = false;
+  private boolean m_TeleopInitialized = false;
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
@@ -81,8 +87,8 @@ public class RobotContainer {
         vision =
             new Vision(
                 drive::addVisionMeasurement,
-                new VisionIOLimelight(camera0Name, drive::getRotation),
-                new VisionIOLimelight(camera1Name, drive::getRotation));
+                new VisionIOLimelight(limelightFrontName, drive::getRotation),
+                new VisionIOLimelight(limelightBackName, drive::getRotation));
         // vision =
         //     new Vision(
         //         demoDrive::addVisionMeasurement,
@@ -105,8 +111,8 @@ public class RobotContainer {
         vision =
             new Vision(
                 drive::addVisionMeasurement,
-                new VisionIOPhotonVisionSim(camera0Name, robotToCamera0, drive::getPose),
-                new VisionIOPhotonVisionSim(camera1Name, robotToCamera1, drive::getPose));
+                new VisionIOPhotonVisionSim(limelightFrontName, robotToCameraFront, drive::getPose),
+                new VisionIOPhotonVisionSim(limelightBackName, robotToCameraBack, drive::getPose));
 
         break;
 
@@ -128,7 +134,7 @@ public class RobotContainer {
 
     m_StartInTeleopUtility = new StartInTeleopUtility(drive::setPose);
 
-    autoCommandManager = new AutoCommandManager(drive);
+    autoCommandManager = new AutoCommandManager(drive, m_pukerSubsystem);
 
     // Configure the button bindings
     configureButtonBindings();
@@ -145,9 +151,9 @@ public class RobotContainer {
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> -controller.getLeftY(),
-            () -> -controller.getLeftX(),
-            () -> -controller.getRightX()));
+            () -> -controller.getLeftY() * DRIVE_SPEED,
+            () -> -controller.getLeftX() * DRIVE_SPEED,
+            () -> -controller.getRightX() * ANGULAR_SPEED));
 
     // Schedule `exampleMethodCommand` when the Xbox controller's B button is
     // pressed,
@@ -158,7 +164,7 @@ public class RobotContainer {
     controller
         .rightTrigger()
         .onTrue(m_pukerSubsystem.newStartMotorCommand())
-        .onFalse(m_pukerSubsystem.newStopMotorCommand());
+        .onFalse(m_pukerSubsystem.newReverseMotorCommand());
     // Lock to 0° when A button is held
     controller
         .a()
@@ -214,15 +220,14 @@ public class RobotContainer {
   }
 
   public void teleopInit() {
-    if (!m_TeleopInitalized) {
+    if (!this.m_TeleopInitialized) {
       // Only want to initialize starting position once (if teleop multiple times dont reset pose
       // again)
       m_StartInTeleopUtility.updateStartingPosition();
-      m_TeleopInitalized = true;
+      m_TeleopInitialized = true;
       // m_visionUpdatesOdometry = true;
     }
     // TODO m_StartInTeleopUtility.updateTags();  when vision finds target/turn off april tags
     // during auto
-
   }
 }

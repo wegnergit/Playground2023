@@ -13,7 +13,8 @@
 
 package frc.robot.subsystems.drive;
 
-import static edu.wpi.first.units.Units.*;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.CANBus;
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -335,7 +336,6 @@ public class Drive extends SubsystemBase {
     Pose2d pose = poseEstimator.getEstimatedPosition();
     robotField2d.setRobotPose(pose);
     return pose;
-    // return poseEstimator.getEstimatedPosition();
   }
 
   /** Returns the current odometry rotation. */
