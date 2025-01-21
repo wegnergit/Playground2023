@@ -1,4 +1,4 @@
-// Copyright 2021-2024 FRC 6328
+// Copyright 2021-2025 FRC 6328
 // http://github.com/Mechanical-Advantage
 //
 // This program is free software; you can redistribute it and/or
@@ -68,6 +68,7 @@ public class Vision extends SubsystemBase {
   public void periodic() {
     for (int i = 0; i < io.length; i++) {
       io[i].updateInputs(inputs[i]);
+      // TODO May want to find way to Log by Camera Name verses where in input array
       Logger.processInputs("Vision/Camera" + Integer.toString(i), inputs[i]);
     }
 
@@ -103,8 +104,9 @@ public class Vision extends SubsystemBase {
             observation.tagCount() == 0 // Must have at least one tag
                 || (observation.tagCount() == 1
                     && observation.ambiguity() > maxAmbiguity) // Cannot be high ambiguity
-                || Math.abs(observation.pose().getZ())
-                    > maxZError // Must have realistic Z coordinate
+                // TODO Determine why they want about 2.4 ft off ground???
+                // || Math.abs(observation.pose().getZ())
+                //   > maxZError // Must have realistic Z coordinate
 
                 // Must be within the field boundaries
                 || observation.pose().getX() < 0.0
@@ -147,6 +149,7 @@ public class Vision extends SubsystemBase {
       }
 
       // Log camera datadata
+      // TODO May want to find way to Log by Camera Name verses where in input array
       Logger.recordOutput(
           "Vision/Camera" + Integer.toString(cameraIndex) + "/TagPoses",
           tagPoses.toArray(new Pose3d[tagPoses.size()]));

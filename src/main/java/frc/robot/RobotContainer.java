@@ -19,7 +19,7 @@
  */
 package frc.robot;
 
-import static frc.robot.subsystems.vision.VisionConstants.*;
+import com.ctre.phoenix6.SignalLogger;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.PukerSubsystem;
@@ -38,6 +39,10 @@ import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.vision.Vision;
+import static frc.robot.subsystems.vision.VisionConstants.limelightBackName;
+import static frc.robot.subsystems.vision.VisionConstants.limelightFrontName;
+import static frc.robot.subsystems.vision.VisionConstants.robotToCameraBack;
+import static frc.robot.subsystems.vision.VisionConstants.robotToCameraFront;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
@@ -55,16 +60,20 @@ public class RobotContainer {
 
   private final StartInTeleopUtility m_StartInTeleopUtility;
 
-  private final PukerSubsystem m_pukerSubsystem = new PukerSubsystem(20);
+  private final PukerSubsystem m_pukerSubsystem = new PukerSubsystem(20, 0.10);
+
+  private final double DRIVE_SPEED = 1.0;
+  private final double ANGULAR_SPEED = 0.75;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
+  private final CommandXboxController co_controller = new CommandXboxController(1);
 
   private final Vision vision;
 
   private AutoCommandManager autoCommandManager;
 
-  private boolean m_TeleopInitalized = false;
+  private boolean m_TeleopInitialized = false;
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
@@ -81,8 +90,8 @@ public class RobotContainer {
         vision =
             new Vision(
                 drive::addVisionMeasurement,
-                new VisionIOLimelight(camera0Name, drive::getRotation),
-                new VisionIOLimelight(camera1Name, drive::getRotation));
+                new VisionIOLimelight(limelightFrontName, drive::getRotation),
+                new VisionIOLimelight(limelightBackName, drive::getRotation));
         // vision =
         //     new Vision(
         //         demoDrive::addVisionMeasurement,
@@ -105,8 +114,8 @@ public class RobotContainer {
         vision =
             new Vision(
                 drive::addVisionMeasurement,
-                new VisionIOPhotonVisionSim(camera0Name, robotToCamera0, drive::getPose),
-                new VisionIOPhotonVisionSim(camera1Name, robotToCamera1, drive::getPose));
+                new VisionIOPhotonVisionSim(limelightFrontName, robotToCameraFront, drive::getPose),
+                new VisionIOPhotonVisionSim(limelightBackName, robotToCameraBack, drive::getPose));
 
         break;
 
@@ -127,8 +136,11 @@ public class RobotContainer {
     }
 
     m_StartInTeleopUtility = new StartInTeleopUtility(drive::setPose);
+    // Provided drive class with utility to set robot if apriltag was used so not to set
+    // initial/startingPose pose
+    drive.setStartinTeleopUtility(m_StartInTeleopUtility);
 
-    autoCommandManager = new AutoCommandManager(drive);
+    autoCommandManager = new AutoCommandManager(drive, m_pukerSubsystem);
 
     // Configure the button bindings
     configureButtonBindings();
@@ -138,16 +150,16 @@ public class RobotContainer {
    * Use this method to define your button->command mappings. Buttons can be created by
    * instantiating a {@link GenericHID} or one of its subclasses ({@link
    * edu.wpi.first.wpilibj.Joystick} or {@link XboxController}), and then passing it to a {@link
-   * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
+   * edu.wpi.first.wpilibj2.command.button.JoystickButton}. Used for getting SysIDs
    */
-  private void configureButtonBindings() {
+  private void configureButtonBindingsSysID() {
     // Default command, normal field-relative drive
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> -controller.getLeftY(),
-            () -> -controller.getLeftX(),
-            () -> -controller.getRightX()));
+            () -> -controller.getLeftY() * DRIVE_SPEED,
+            () -> -controller.getLeftX() * DRIVE_SPEED,
+            () -> -controller.getRightX() * ANGULAR_SPEED));
 
     // Schedule `exampleMethodCommand` when the Xbox controller's B button is
     // pressed,
@@ -158,7 +170,11 @@ public class RobotContainer {
     controller
         .rightTrigger()
         .onTrue(m_pukerSubsystem.newStartMotorCommand())
-        .onFalse(m_pukerSubsystem.newStopMotorCommand());
+        .onFalse(m_pukerSubsystem.newReverseMotorCommand());
+    co_controller
+        .rightTrigger()
+        .onTrue(m_pukerSubsystem.newStartMotorCommand())
+        .onFalse(m_pukerSubsystem.newReverseMotorCommand());
     // Lock to 0° when A button is held
     controller
         .a()
@@ -173,6 +189,64 @@ public class RobotContainer {
     controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
     // Reset gyro to 0° when B button is pressed
+    controller
+        .b()
+        .onTrue(
+            Commands.runOnce(
+                    () ->
+                        drive.setPose(
+                            new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
+                    drive)
+                .ignoringDisable(true));
+    controller.back().and(controller.y()).whileTrue(drive.sysIdDynamic(Direction.kForward));
+    controller.back().and(controller.x()).whileTrue(drive.sysIdDynamic(Direction.kReverse));
+    controller.start().and(controller.y()).whileTrue(drive.sysIdQuasistatic(Direction.kForward));
+    controller.start().and(controller.x()).whileTrue(drive.sysIdQuasistatic(Direction.kReverse));
+  }
+
+  /**
+   * Use this method to define your button->command mappings. Buttons can be created by
+   * instantiating a {@link GenericHID} or one of its subclasses ({@link
+   * edu.wpi.first.wpilibj.Joystick} or {@link XboxController}), and then passing it to a {@link
+   * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
+   */
+  private void configureButtonBindings() {
+    // Default command, normal field-relative drive
+    drive.setDefaultCommand(
+        DriveCommands.joystickDrive(
+            drive,
+            () -> -controller.getLeftY() * DRIVE_SPEED,
+            () -> -controller.getLeftX() * DRIVE_SPEED,
+            () -> -controller.getRightX() * ANGULAR_SPEED));
+
+    // Schedule `exampleMethodCommand` when the Xbox controller's B button is
+    // pressed,
+    // cancelling on release.
+
+    // m_driverController.b().whileTrue(m_exampleSubsystem.exampleMethodCommand());
+
+    controller
+        .rightTrigger()
+        .onTrue(m_pukerSubsystem.newStartMotorCommand())
+        .onFalse(m_pukerSubsystem.newReverseMotorCommand());
+    co_controller
+        .rightTrigger()
+        .onTrue(m_pukerSubsystem.newStartMotorCommand())
+        .onFalse(m_pukerSubsystem.newReverseMotorCommand());
+    // Lock to 0° when A button is held
+    controller
+        .a()
+        .whileTrue(
+            DriveCommands.joystickDriveAtAngle(
+                drive,
+                () -> -controller.getLeftY(),
+                () -> -controller.getLeftX(),
+                () -> new Rotation2d()));
+
+    // Switch to X pattern when X button is pressed
+    controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+
+    // Reset gyro to 0° when B button is pressed
     controller
         .b()
         .onTrue(
@@ -199,7 +273,6 @@ public class RobotContainer {
     //             },
     //             drive));
   }
-
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *
@@ -214,15 +287,16 @@ public class RobotContainer {
   }
 
   public void teleopInit() {
-    if (!m_TeleopInitalized) {
+    if (!this.m_TeleopInitialized) {
       // Only want to initialize starting position once (if teleop multiple times dont reset pose
       // again)
       m_StartInTeleopUtility.updateStartingPosition();
-      m_TeleopInitalized = true;
+      m_TeleopInitialized = true;
+      SignalLogger.setPath("/media/sda1/");
+      SignalLogger.start();
       // m_visionUpdatesOdometry = true;
     }
     // TODO m_StartInTeleopUtility.updateTags();  when vision finds target/turn off april tags
     // during auto
-
   }
 }

@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -7,20 +8,21 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class PukerSubsystem extends SubsystemBase {
 
-  private final double PUKER_OUTTAKE_SPEED = 1.0;
+  private static final double PUKER_DEFAULT_OUTTAKE_SPEED = 0.1;
 
   private TalonFX m_motor;
   private double m_motorSpeed;
 
   public PukerSubsystem(int id, double motorSpeed) {
+    TalonFXConfiguration cfg;
     m_motor = new TalonFX(id, "rio");
+    m_motor.setInverted(true);
     m_motorSpeed = motorSpeed;
   }
 
   // Overload for default speed if not set
   public PukerSubsystem(int id) {
-    m_motor = new TalonFX(id, "rio");
-    m_motorSpeed = PUKER_OUTTAKE_SPEED;
+    this(id, PUKER_DEFAULT_OUTTAKE_SPEED);
   }
 
   public void setSpeed(double speed) {
@@ -38,5 +40,9 @@ public class PukerSubsystem extends SubsystemBase {
 
   public Command newStopMotorCommand() {
     return newSetSpeedCommand(0.0);
+  }
+
+  public Command newReverseMotorCommand() {
+    return newSetSpeedCommand(-0.02);
   }
 }
