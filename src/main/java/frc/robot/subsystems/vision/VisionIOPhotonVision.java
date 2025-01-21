@@ -28,6 +28,7 @@ import org.photonvision.PhotonCamera;
 public class VisionIOPhotonVision implements VisionIO {
   protected final PhotonCamera camera;
   protected final Transform3d robotToCamera;
+  protected final String name;
 
   /**
    * Creates a new VisionIOPhotonVision.
@@ -36,12 +37,14 @@ public class VisionIOPhotonVision implements VisionIO {
    * @param rotationSupplier The 3D position of the camera relative to the robot.
    */
   public VisionIOPhotonVision(String name, Transform3d robotToCamera) {
+    this.name = name;
     camera = new PhotonCamera(name);
     this.robotToCamera = robotToCamera;
   }
 
   @Override
   public void updateInputs(VisionIOInputs inputs) {
+    inputs.cameraName = this.name;
     inputs.connected = camera.isConnected();
 
     // Read new camera observations
@@ -79,6 +82,7 @@ public class VisionIOPhotonVision implements VisionIO {
         // Add observation
         poseObservations.add(
             new PoseObservation(
+                inputs.cameraName,
                 result.getTimestampSeconds(), // Timestamp
                 robotPose, // 3D pose estimate
                 multitagResult.estimatedPose.ambiguity, // Ambiguity
@@ -105,6 +109,7 @@ public class VisionIOPhotonVision implements VisionIO {
           // Add observation
           poseObservations.add(
               new PoseObservation(
+                  inputs.cameraName,
                   result.getTimestampSeconds(), // Timestamp
                   robotPose, // 3D pose estimate
                   target.poseAmbiguity, // Ambiguity

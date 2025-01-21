@@ -20,6 +20,7 @@ import org.littletonrobotics.junction.AutoLog;
 public interface VisionIO {
   @AutoLog
   public static class VisionIOInputs {
+    public String cameraName = "UNKNOWN";
     public boolean connected = false;
     public TargetObservation latestTargetObservation =
         new TargetObservation(new Rotation2d(), new Rotation2d());
@@ -32,6 +33,7 @@ public interface VisionIO {
 
   /** Represents a robot pose sample used for pose estimation. */
   public static record PoseObservation(
+      String cameraName,
       double timestamp,
       Pose3d pose,
       double ambiguity,

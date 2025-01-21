@@ -39,6 +39,8 @@ public class VisionIOLimelight implements VisionIO {
   private final DoubleArraySubscriber megatag1Subscriber;
   private final DoubleArraySubscriber megatag2Subscriber;
 
+  private final String name;
+
   /**
    * Creates a new VisionIOLimelight.
    *
@@ -46,6 +48,7 @@ public class VisionIOLimelight implements VisionIO {
    * @param rotationSupplier Supplier for the current estimated rotation, used for MegaTag 2.
    */
   public VisionIOLimelight(String name, Supplier<Rotation2d> rotationSupplier) {
+    this.name = name;
     var table = NetworkTableInstance.getDefault().getTable(name);
     this.rotationSupplier = rotationSupplier;
     orientationPublisher = table.getDoubleArrayTopic("robot_orientation_set").publish();
@@ -59,6 +62,7 @@ public class VisionIOLimelight implements VisionIO {
 
   @Override
   public void updateInputs(VisionIOInputs inputs) {
+    inputs.cameraName = this.name;
     // Update connection status based on whether an update has been seen in the last 250ms
     inputs.connected =
         ((RobotController.getFPGATime() - latencySubscriber.getLastChange()) / 1000) < 250;
@@ -89,6 +93,7 @@ public class VisionIOLimelight implements VisionIO {
         }
         poseObservations.add(
             new PoseObservation(
+                inputs.cameraName,
                 // Timestamp, based on server timestamp of publish and latency
                 rawSample.timestamp * 1.0e-6 - rawSample.value[6] * 1.0e-3,
 
@@ -116,6 +121,7 @@ public class VisionIOLimelight implements VisionIO {
         }
         poseObservations.add(
             new PoseObservation(
+                inputs.cameraName,
                 // Timestamp, based on server timestamp of publish and latency
                 rawSample.timestamp * 1.0e-6 - rawSample.value[6] * 1.0e-3,
 
