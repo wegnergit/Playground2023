@@ -19,8 +19,12 @@
  */
 package frc.robot;
 
-import com.ctre.phoenix6.SignalLogger;
+import static frc.robot.subsystems.vision.VisionConstants.limelightBackName;
+import static frc.robot.subsystems.vision.VisionConstants.limelightFrontName;
+import static frc.robot.subsystems.vision.VisionConstants.robotToCameraBack;
+import static frc.robot.subsystems.vision.VisionConstants.robotToCameraFront;
 
+import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID;
@@ -38,15 +42,10 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
-import frc.robot.subsystems.vision.Vision;
-import static frc.robot.subsystems.vision.VisionConstants.limelightBackName;
-import static frc.robot.subsystems.vision.VisionConstants.limelightFrontName;
-import static frc.robot.subsystems.vision.VisionConstants.robotToCameraBack;
-import static frc.robot.subsystems.vision.VisionConstants.robotToCameraFront;
+import frc.robot.subsystems.vision.AprilTagVision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
-import frc.robot.util.StartInTeleopUtility;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -58,8 +57,6 @@ public class RobotContainer {
   // Subsystems
   private final Drive drive;
 
-  private final StartInTeleopUtility m_StartInTeleopUtility;
-
   private final PukerSubsystem m_pukerSubsystem = new PukerSubsystem(20, 0.10);
 
   private final double DRIVE_SPEED = 1.0;
@@ -69,7 +66,7 @@ public class RobotContainer {
   private final CommandXboxController controller = new CommandXboxController(0);
   private final CommandXboxController co_controller = new CommandXboxController(1);
 
-  private final Vision vision;
+  private final AprilTagVision vision;
 
   private AutoCommandManager autoCommandManager;
 
@@ -88,15 +85,11 @@ public class RobotContainer {
                 new ModuleIOTalonFX(TunerConstants.BackRight));
 
         vision =
-            new Vision(
+            new AprilTagVision(
+                drive::setPose,
                 drive::addVisionMeasurement,
                 new VisionIOLimelight(limelightFrontName, drive::getRotation),
                 new VisionIOLimelight(limelightBackName, drive::getRotation));
-        // vision =
-        //     new Vision(
-        //         demoDrive::addVisionMeasurement,
-        //         new VisionIOPhotonVision(camera0Name, robotToCamera0),
-        //         new VisionIOPhotonVision(camera1Name, robotToCamera1));
 
         // Real robot, instantiate hardware IO implementations
         break;
@@ -112,7 +105,8 @@ public class RobotContainer {
                 new ModuleIOSim(TunerConstants.BackRight));
 
         vision =
-            new Vision(
+            new AprilTagVision(
+                drive::setPose,
                 drive::addVisionMeasurement,
                 new VisionIOPhotonVisionSim(limelightFrontName, robotToCameraFront, drive::getPose),
                 new VisionIOPhotonVisionSim(limelightBackName, robotToCameraBack, drive::getPose));
@@ -130,16 +124,12 @@ public class RobotContainer {
 
         // Replayed robot, disable IO implementations
         // (Use same number of dummy implementations as the real robot)
-        vision = new Vision(drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
+        vision =
+            new AprilTagVision(
+                drive::setPose, drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
 
         break;
     }
-
-    m_StartInTeleopUtility = new StartInTeleopUtility(drive::setPose);
-    // Provided drive class with utility to set robot if apriltag was used so not to set
-    // initial/startingPose pose
-    drive.setStartinTeleopUtility(m_StartInTeleopUtility);
-
     autoCommandManager = new AutoCommandManager(drive, m_pukerSubsystem);
 
     // Configure the button bindings
@@ -280,8 +270,11 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     Command autoCommand = autoCommandManager.getAutonomousCommand();
+    // Turn off updating odometry based on Apriltags
+    vision.disableUpdateOdometryBasedOnApriltags();
     if (autoCommand != null) {
-      m_StartInTeleopUtility.updateAutonomous();
+      // Tell vision autonomous path was executed, so pose was set
+      vision.updateAutonomous();
     }
     return autoCommand;
   }
@@ -290,13 +283,12 @@ public class RobotContainer {
     if (!this.m_TeleopInitialized) {
       // Only want to initialize starting position once (if teleop multiple times dont reset pose
       // again)
-      m_StartInTeleopUtility.updateStartingPosition();
+      vision.updateStartingPosition();
+      // Turn on updating odometry based on Apriltags
+      vision.enableUpdateOdometryBasedOnApriltags();
       m_TeleopInitialized = true;
       SignalLogger.setPath("/media/sda1/");
       SignalLogger.start();
-      // m_visionUpdatesOdometry = true;
     }
-    // TODO m_StartInTeleopUtility.updateTags();  when vision finds target/turn off april tags
-    // during auto
   }
 }

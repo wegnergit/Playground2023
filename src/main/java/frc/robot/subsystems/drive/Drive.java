@@ -54,7 +54,6 @@ import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.robot.generated.TunerConstants;
 import frc.robot.util.LocalADStarAK;
-import frc.robot.util.StartInTeleopUtility;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -113,8 +112,6 @@ public class Drive extends SubsystemBase {
 
   private final Field2d ppField2d = new Field2d();
   private final Field2d robotField2d = new Field2d();
-
-  private StartInTeleopUtility m_startInTeleopUtility = null;
 
   public Drive(
       GyroIO gyroIO,
@@ -354,12 +351,6 @@ public class Drive extends SubsystemBase {
       Pose2d visionRobotPoseMeters,
       double timestampSeconds,
       Matrix<N3, N1> visionMeasurementStdDevs) {
-    // Tell robot whether found a tag or not
-    if (this.m_startInTeleopUtility != null) {
-      this.m_startInTeleopUtility.updateTags();
-    } else {
-      DriverStation.reportWarning("Did not set startInTeleopUtiluty!!!", null);
-    }
     poseEstimator.addVisionMeasurement(
         visionRobotPoseMeters, timestampSeconds, visionMeasurementStdDevs);
   }
@@ -382,9 +373,5 @@ public class Drive extends SubsystemBase {
       new Translation2d(TunerConstants.BackLeft.LocationX, TunerConstants.BackLeft.LocationY),
       new Translation2d(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY)
     };
-  }
-
-  public void setStartinTeleopUtility(StartInTeleopUtility startInTeleopUtility) {
-    this.m_startInTeleopUtility = startInTeleopUtility;
   }
 }
